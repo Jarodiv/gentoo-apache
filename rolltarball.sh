@@ -89,7 +89,7 @@ echo
 
 # put it on the mirrors
 echo "Putting ${TB} on the mirrors ..."
-#scp ${TB} ${G_USER}@dev.gentoo.org:/space/distfiles-local || die "Couldn't upload tarball"
+scp ${TB} ${G_USER}@dev.gentoo.org:/space/distfiles-local || die "Couldn't upload tarball"
 echo " ... done!"
 echo
 echo "Please remember it can take up to 24 hours for full propogation"
