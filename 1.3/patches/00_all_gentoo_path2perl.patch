@@ -1,0 +1,90 @@
+diff -Naur apache_1.3.32/cgi-bin/printenv apache_1.3.32-perlfix/cgi-bin/printenv
+--- apache_1.3.32/cgi-bin/printenv	1999-11-24 19:10:58.000000000 +0100
++++ apache_1.3.32-perlfix/cgi-bin/printenv	2004-10-26 20:20:12.664869032 +0200
+@@ -1,4 +1,4 @@
+-#!/usr/local/bin/perl
++#!/usr/bin/perl
+ ##
+ ##  printenv -- demo CGI program which just prints its environment
+ ##
+diff -Naur apache_1.3.32/src/helpers/MakeLint apache_1.3.32-perlfix/src/helpers/MakeLint
+--- apache_1.3.32/src/helpers/MakeLint	2004-02-16 23:23:09.000000000 +0100
++++ apache_1.3.32-perlfix/src/helpers/MakeLint	2004-10-26 20:20:14.694560472 +0200
+@@ -1,4 +1,4 @@
+-#!perl
++#!/usr/bin/perl
+ #
+ # Copyright 1999-2004 The Apache Software Foundation
+ #
+diff -Naur apache_1.3.32/src/support/SHA1/convert-sha1.pl apache_1.3.32-perlfix/src/support/SHA1/convert-sha1.pl
+--- apache_1.3.32/src/support/SHA1/convert-sha1.pl	1999-08-02 12:13:50.000000000 +0200
++++ apache_1.3.32-perlfix/src/support/SHA1/convert-sha1.pl	2004-10-26 20:20:16.179334752 +0200
+@@ -1,4 +1,4 @@
+-#!/usr/bin/perl -w
++#!/usr/bin/perl
+ use strict;
+ 
+ # This is public domain code.  Do whatever you want with it.
+diff -Naur apache_1.3.32/src/support/SHA1/htpasswd-sha1.pl apache_1.3.32-perlfix/src/support/SHA1/htpasswd-sha1.pl
+--- apache_1.3.32/src/support/SHA1/htpasswd-sha1.pl	1999-08-02 12:13:50.000000000 +0200
++++ apache_1.3.32-perlfix/src/support/SHA1/htpasswd-sha1.pl	2004-10-26 20:20:16.192332776 +0200
+@@ -1,4 +1,4 @@
+-#!/usr/bin/perl -w
++#!/usr/bin/perl
+ use strict;
+ #
+ # Utility which takes a username and password
+diff -Naur apache_1.3.32/src/support/apxs.pl apache_1.3.32-perlfix/src/support/apxs.pl
+--- apache_1.3.32/src/support/apxs.pl	2004-02-20 23:02:24.000000000 +0100
++++ apache_1.3.32-perlfix/src/support/apxs.pl	2004-10-26 20:20:16.005361200 +0200
+@@ -1,4 +1,4 @@
+-#!/usr/local/bin/perl
++#!/usr/bin/perl
+ #
+ # Copyright 1999-2004 The Apache Software Foundation
+ #
+diff -Naur apache_1.3.32/src/support/dbmmanage apache_1.3.32-perlfix/src/support/dbmmanage
+--- apache_1.3.32/src/support/dbmmanage	2004-02-20 23:02:24.000000000 +0100
++++ apache_1.3.32-perlfix/src/support/dbmmanage	2004-10-26 20:20:16.027357856 +0200
+@@ -1,4 +1,4 @@
+-#!/usr/local/bin/perl
++#!/usr/bin/perl
+ #
+ # Copyright 1999-2004 The Apache Software Foundation
+ #
+diff -Naur apache_1.3.32/src/support/log_server_status apache_1.3.32-perlfix/src/support/log_server_status
+--- apache_1.3.32/src/support/log_server_status	2004-02-20 23:02:24.000000000 +0100
++++ apache_1.3.32-perlfix/src/support/log_server_status	2004-10-26 20:20:16.081349648 +0200
+@@ -1,4 +1,4 @@
+-#!/usr/local/bin/perl
++#!/usr/bin/perl
+ #
+ # Copyright 1999-2004 The Apache Software Foundation
+ #
+diff -Naur apache_1.3.32/src/support/logresolve.pl apache_1.3.32-perlfix/src/support/logresolve.pl
+--- apache_1.3.32/src/support/logresolve.pl	2004-02-20 23:02:24.000000000 +0100
++++ apache_1.3.32-perlfix/src/support/logresolve.pl	2004-10-26 20:20:16.114344632 +0200
+@@ -1,4 +1,4 @@
+-#!/usr/local/bin/perl
++#!/usr/bin/perl
+ #
+ # Copyright 1999-2004 The Apache Software Foundation
+ #
+diff -Naur apache_1.3.32/src/support/phf_abuse_log.cgi apache_1.3.32-perlfix/src/support/phf_abuse_log.cgi
+--- apache_1.3.32/src/support/phf_abuse_log.cgi	2004-02-20 23:02:24.000000000 +0100
++++ apache_1.3.32-perlfix/src/support/phf_abuse_log.cgi	2004-10-26 20:20:16.146339768 +0200
+@@ -1,4 +1,4 @@
+-#!/usr/local/bin/perl
++#!/usr/bin/perl
+ #
+ # Copyright 1999-2004 The Apache Software Foundation
+ #
+diff -Naur apache_1.3.32/src/support/split-logfile apache_1.3.32-perlfix/src/support/split-logfile
+--- apache_1.3.32/src/support/split-logfile	2004-02-20 23:02:24.000000000 +0100
++++ apache_1.3.32-perlfix/src/support/split-logfile	2004-10-26 20:20:16.212329736 +0200
+@@ -1,4 +1,4 @@
+-#!/usr/local/bin/perl
++#!/usr/bin/perl
+ #
+ # Copyright 1999-2004 The Apache Software Foundation
+ #

@@ -1,0 +1,6 @@
+* add error pages
+  (maybe create own - gentoo dedicated - error page set)
+* make the index.html page a bit nicer?
+* if more pages are to come, split inline css it's own file, style.css.
+* put gentoo specific icons into icons/ dir.
+  (maybe create own - gentoo dedicated - icon set)

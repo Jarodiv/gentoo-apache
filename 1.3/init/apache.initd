@@ -1,0 +1,85 @@
+#!/sbin/runscript
+# Copyright 1999-2004 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License v2
+# $Header$
+
+opts="${opts} reload"
+
+depend() {
+	need net
+	use mysql dns logger netmount postgres lingerd
+	after sshd
+}
+
+checkconfig() {
+	SERVERROOT="${SERVERROOT:-/usr/lib/apache}"
+	if [ ! -d ${SERVERROOT} ]; then
+		eerror "SERVERROOT does not exist: ${SERVERROOT}"
+		return 1
+	fi
+	
+	CONFIGFILE="${CONFIGFILE:-/etc/apache/httpd.conf}"
+	[ ${CONFIGFILE:0:1} != "/" ] && CONFIGFILE="${SERVERROOT}/${CONFIGFILE}"
+	if [ ! -r "${CONFIGFILE}" ]; then
+		eerror "Unable to read configuration file: ${CONFIGFILE}"
+		return 1
+	fi
+	
+	# check to see if the old config files exist and aren't used
+	if [[ "${CONFIGFILE}" != "/etc/apache/conf/apache.conf" && 
+			-e "/etc/apache/conf/apache.conf" ]]; then
+		eerror "Found old apache.conf in /etc/apache/conf. Configuration locations \n have moved, please check ${CONFIGFILE} to make sure it is correct, \n and remove /etc/apache/conf/apache.conf"
+		return 1
+	fi
+	
+	PIDFILE="${PIDFILE:-/var/run/apache.pid}"
+	
+	[ -n "${SERVERROOT}" ] && APACHE_OPTS="${APACHE_OPTS} -d ${SERVERROOT}"
+	[ -n "${CONFIGFILE}" ] && APACHE_OPTS="${APACHE_OPTS} -f ${CONFIGFILE}"
+	
+	APACHE="env -i PATH=${PATH} /usr/sbin/apache ${APACHE_OPTS}"
+	
+	$APACHE -t 1>/dev/null 2>&1
+	ret=$?
+	if [ $ret -ne 0 ]; then
+		eerror "Apache has detected a syntax error in your configuration files:"
+		${APACHE} -t
+	fi
+	
+	return $ret
+}
+
+start() {
+	checkconfig || return 1
+	ebegin "Starting apache"
+	env -i PATH=$PATH PERL5LIB=PERL5LIB \
+	/sbin/start-stop-daemon -o --quiet --start \
+		--startas /usr/sbin/apache --pidfile ${PIDFILE} -- ${APACHE_OPTS}
+	eend $?
+}
+
+stop() {
+	checkconfig || return 1
+	ebegin "Stopping apache"
+	/sbin/start-stop-daemon -o --quiet --stop --pidfile ${PIDFILE}
+	eend $?
+}
+
+restart() {
+	checkconfig || return 1
+	svc_stop
+	svc_start
+}
+
+reload() {
+	checkconfig || return 1
+	ebegin "Reloading apache"
+	if [ -f ${PIDFILE} ]; then
+		kill -USR1 $(<${PIDFILE})
+		eend $?
+	else
+		eerror "Apache not running."
+		eend $?
+		svc_start
+	fi
+}

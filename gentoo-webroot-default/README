@@ -1,0 +1,18 @@
+gentoo-webroot-default
+======================
+
+
+The goal of this package, is, to provide a default virtual host 
+content to be served by default gentoo web server configurations.
+
+
+This package shall provide:
+- generic document content (htdocs/)
+- a (gentoo specific) icon set (icons/)
+- a (gentoo specific?) error document set (error/)
+- ... something utopic missing? ...
+
+
+
+--
+vim:ai:et:ts=2:nowrap

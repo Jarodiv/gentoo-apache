@@ -1,0 +1,95 @@
+diff -Naur httpd-2.0.52/include/httpd.h httpd-2.0.52-gentoo/include/httpd.h
+--- httpd-2.0.52/include/httpd.h	2004-08-12 07:22:52.000000000 +0200
++++ httpd-2.0.52-gentoo/include/httpd.h	2004-10-22 18:07:12.698194320 +0200
+@@ -137,7 +137,7 @@
+ 
+ /* The path to the suExec wrapper, can be overridden in Configuration */
+ #ifndef SUEXEC_BIN
+-#define SUEXEC_BIN  HTTPD_ROOT "/bin/suexec"
++#define SUEXEC_BIN  "/usr/sbin/suexec2"
+ #endif
+ 
+ /* The timeout for waiting for messages */
+diff -Naur httpd-2.0.52/modules/ssl/ssl_engine_mutex.c httpd-2.0.52-gentoo/modules/ssl/ssl_engine_mutex.c
+--- httpd-2.0.52/modules/ssl/ssl_engine_mutex.c	2004-02-09 21:53:20.000000000 +0100
++++ httpd-2.0.52-gentoo/modules/ssl/ssl_engine_mutex.c	2004-10-22 18:07:12.699194168 +0200
+@@ -41,6 +41,8 @@
+     if (mc->nMutexMode == SSL_MUTEXMODE_NONE) 
+         return TRUE;
+ 
++    apr_file_remove(mc->szMutexFile, p);
++
+     if ((rv = apr_global_mutex_create(&mc->pMutex, mc->szMutexFile,
+                                 mc->nMutexMech, p)) != APR_SUCCESS) {
+         if (mc->szMutexFile)
+diff -Naur httpd-2.0.52/server/Makefile.in httpd-2.0.52-gentoo/server/Makefile.in
+--- httpd-2.0.52/server/Makefile.in	2004-03-08 18:40:37.000000000 +0100
++++ httpd-2.0.52-gentoo/server/Makefile.in	2004-10-22 18:07:12.700194016 +0200
+@@ -67,6 +67,9 @@
+ export_vars.h: export_files
+ 	$(AWK) -f $(top_srcdir)/build/make_var_export.awk `cat $?` > $@
+ 
++# Needed to allow exports.c to be generated in a parallel build successfully
++.NOTPARALLEL: $(top_builddir)/server/exports.c
++
+ # Rule to make def file for OS/2 core dll
+ ApacheCoreOS2.def: exports.c export_vars.h $(top_srcdir)/os/$(OS_DIR)/core_header.def
+ 	cat $(top_srcdir)/os/$(OS_DIR)/core_header.def > $@
+diff -Naur httpd-2.0.52/server/core.c httpd-2.0.52-gentoo/server/core.c
+--- httpd-2.0.52/server/core.c	2004-09-21 15:21:16.000000000 +0200
++++ httpd-2.0.52-gentoo/server/core.c	2004-10-22 18:14:55.241876992 +0200
+@@ -2489,7 +2489,7 @@
+         ap_add_version_component(pconf, AP_SERVER_BASEPRODUCT "/" AP_SERVER_MAJORVERSION);
+     }
+     else {
+-        ap_add_version_component(pconf, AP_SERVER_BASEVERSION " (" PLATFORM ")");
++        ap_add_version_component(pconf, AP_SERVER_BASEVERSION " (Gentoo/Linux)");
+     }
+ 
+     /*
+diff -Naur httpd-2.0.52/support/apachectl.in httpd-2.0.52-gentoo/support/apachectl.in
+--- httpd-2.0.52/support/apachectl.in	2004-08-23 17:07:18.000000000 +0200
++++ httpd-2.0.52-gentoo/support/apachectl.in	2004-10-22 20:23:24.986817608 +0200
+@@ -40,11 +40,16 @@
+ # --------------------                              --------------------
+ # 
+ # the path to your httpd binary, including options if necessary
+-HTTPD='@exp_sbindir@/@progname@'
++. /etc/conf.d/apache2
++if [ -n ${MPM} ] && [ -x @exp_sbindir@/@progname@.${MPM} ]; then
++    HTTPD="@exp_sbindir@/@progname@.${MPM} ${APACHE2_OPTS}"
++else
++    HTTPD="@exp_sbindir@/@progname@ ${APACHE2_OPTS}"
++fi
+ #
+ # pick up any necessary environment variables
+-if test -f @exp_sbindir@/envvars; then
+-  . @exp_sbindir@/envvars
++if test -f @exp_installbuilddir@/envvars; then
++  . @exp_installbuilddir@/envvars
+ fi
+ #
+ # a command that outputs a formatted text version of the HTML at the
+diff -Naur httpd-2.0.52/support/apxs.in httpd-2.0.52-gentoo/support/apxs.in
+--- httpd-2.0.52/support/apxs.in	2004-02-09 21:59:49.000000000 +0100
++++ httpd-2.0.52-gentoo/support/apxs.in	2004-10-22 18:07:12.703193560 +0200
+@@ -198,19 +198,6 @@
+     ($httpd = $0) =~ s:support/apxs$::;
+ }
+ 
+-unless (-x "$httpd") {
+-	error("$httpd not found or not executable");
+-	exit 1;
+-}
+-
+-unless (grep /mod_so/, `. $envvars && $httpd -l`) {
+-    error("Sorry, no shared object support for Apache");
+-    error("available under your platform. Make sure");
+-    error("the Apache module mod_so is compiled into");
+-    error("your server binary `$httpd'.");
+-    exit 1;
+-}
+-
+ sub get_config_vars{
+     my ($file, $rh_config) = @_;
+ 

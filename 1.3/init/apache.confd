@@ -1,0 +1,44 @@
+# Copyright 1999-2004 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License v2
+# $Header$
+
+# Config file for /etc/init.d/apache
+
+# Here's an example using mod_ssl:
+#
+# <IfDefine SSL>
+#    LoadModule ssl_module    extramodules/libssl.so
+# </IfDefine>
+#
+# This means that libssl.so is only loaded into the server when you
+# pass "-D SSL" to it at startup.
+#
+# Anything else in apache.conf which is guarded similarly, like:
+#
+# <IfDefine FOO> ... </IfDefine>
+#
+# can be easily turned on/off by editing APACHE_OPTS below to
+# include or to not include "-D FOO".
+#
+# If you installed mod_throttle, you can add "-D THROTTLE"; if you
+# installed mod_dav, then add "-D DAV".  For mod_gzip use "-D GZIP".
+# The mod_contribs package has several options you can use.  See
+# your apache.conf file for more details.
+#APACHE_OPTS="-D SSL -D PHP4"
+
+# Extended options for advanced uses of Apache ONLY
+# You don't need to edit these unless you are doing crazy Apache stuff
+# As not having them set correctly, or feeding in an incorrect configuration
+# via them will result in Apache failing to start
+# YOU HAVE BEEN WARNED.
+
+# ServerRoot setting
+#SERVERROOT=/usr/lib/apache
+
+# Configuration file location
+# - If this does NOT start with a '/', then it is treated relative to
+# $SERVERROOT by Apache
+#CONFIGFILE=conf/httpd.conf
+
+# Location of Pidfile. Remember to change this in httpd.conf too!
+#PIDFILE=/var/run/apache.pid

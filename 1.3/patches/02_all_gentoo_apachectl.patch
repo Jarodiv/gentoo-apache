@@ -1,0 +1,24 @@
+diff -Naur apache_1.3.31/Makefile.tmpl apache_1.3.31-gentoo/Makefile.tmpl
+--- apache_1.3.31/Makefile.tmpl	2004-02-20 23:40:50.000000000 +0100
++++ apache_1.3.31-gentoo/Makefile.tmpl	2004-10-24 09:29:32.904407712 +0200
+@@ -366,7 +366,6 @@
+ 	fi; \
+ 	echo "$(INSTALL_SCRIPT) $(TOP)/$(SRC)/support/apachectl[*] $(root)$(sbindir)/$${apachectl}"; \
+ 	sed -e 's;PIDFILE=.*;PIDFILE=$(runtimedir)/$(TARGET).pid;' \
+-		-e 's;HTTPD=.*;HTTPD=$(sbindir)/$(TARGET);' \
+ 		< $(TOP)/$(SRC)/support/apachectl > $(TOP)/$(SRC)/.apaci.install.tmp && \
+ 		$(INSTALL_SCRIPT) $(TOP)/$(SRC)/.apaci.install.tmp $(root)$(sbindir)/$${apachectl}; \
+ 	echo "$(INSTALL_DATA) $(TOP)/$(SRC)/support/apachectl.8 $(root)$(mandir)/man8/$${apachectl}.8"; \
+diff -Naur apache_1.3.31/src/support/apachectl apache_1.3.31-gentoo/src/support/apachectl
+--- apache_1.3.31/src/support/apachectl	2004-02-20 23:02:24.000000000 +0100
++++ apache_1.3.31-gentoo/src/support/apachectl	2004-10-24 09:29:32.907407256 +0200
+@@ -40,7 +40,8 @@
+ PIDFILE=/usr/local/apache/logs/httpd.pid
+ #
+ # the path to your httpd binary, including options if necessary
+-HTTPD='/usr/local/apache/src/httpd'
++. /etc/conf.d/apache
++HTTPD="/usr/sbin/apache ${APACHE_OPTS}"
+ #
+ # a command that outputs a formatted text version of the HTML at the
+ # url given on the command line.  Designed for lynx, however other

@@ -1,0 +1,43 @@
+# Copyright 1999-2004 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License v2
+# $Header$
+
+# Config file for /etc/init.d/apache2
+
+# An example from /etc/apache2/modules.d/40_mod_ssl.conf:
+#
+# <IfDefine SSL>
+#  <IfModule !mod_ssl.c>
+#    LoadModule ssl_module    extramodules/mod_ssl.so
+#  </IfModule>
+# </IfDefine>
+#
+# This means that the mod_ssl.so DSO module is only loaded
+# into the server when you pass "-D SSL" at startup.  To
+# enable WebDAV, add "-D DAV -D DAV_FS".  If you installed
+# mod_php then add "-D PHP4".  For more options, please
+# read the files in the /etc/apache2/modules.d directory.
+#APACHE2_OPTS="-D SSL"
+
+# Extended options for advanced uses of Apache ONLY
+# You don't need to edit these unless you are doing crazy Apache stuff
+# As not having them set correctly, or feeding in an incorrect configuration
+# via them will result in Apache failing to start
+# YOU HAVE BEEN WARNED.
+
+# ServerRoot setting
+#SERVERROOT=/usr/lib/apache2
+
+# MPM to use
+# to get available MPMs:
+#  for i in `ls /usr/sbin/apache2.*`; do echo `basename ${i/apache2./}`;done
+#MPM=prefork
+
+# Configuration file location
+# - If this does NOT start with a '/', then it is treated relative to
+# $SERVERROOT by Apache
+#CONFIGFILE=conf/httpd.conf
+
+# Location to log startup errors to
+# They are normally dumped to your terminal.
+#STARTUPERRORLOG="/var/log/apache2/startuperror.log"
