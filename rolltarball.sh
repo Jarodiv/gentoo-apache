@@ -88,6 +88,7 @@ scp ${TB}.tar.bz2 ${G_USER}@dev.gentoo.org:/space/distfiles-local || die "Couldn
 echo " ... done!"
 echo
 echo "Please remember it can take up to 24 hours for full propogation"
+echo "Make sure the tarball is on the mirrors before marking a package as stable"
 echo
 echo "All finished!"
 
