@@ -3,12 +3,18 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header$
 
-opts="${opts} reload"
+opts="${opts} reload configtest"
 
 depend() {
 	need net
 	use mysql dns logger netmount postgres lingerd
 	after sshd
+}
+
+configtest() {
+	ebegin "Checking Apache Configuration"
+	checkconfig
+	eend $?
 }
 
 checkconfig() {

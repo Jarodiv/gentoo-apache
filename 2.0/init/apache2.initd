@@ -3,7 +3,7 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header$
 
-opts="${opts} reload"
+opts="${opts} reload configtest"
 
 # cannot use $1 in local scope in selectconfig
 FILENAME=`basename $1`
@@ -16,6 +16,12 @@ depend() {
 	need net
 	use mysql dns logger netmount postgres
 	after sshd
+}
+
+configtest() {
+	ebegin "Checking Apache Configuration"
+	checkconfig
+	eend $?
 }
 
 checkconfig() {
