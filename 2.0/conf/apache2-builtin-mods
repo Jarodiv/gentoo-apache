@@ -47,7 +47,6 @@ mod_proxy shared
 mod_proxy-connect shared
 mod_proxy-ftp shared
 mod_proxy-http shared
-mod_ssl shared
 - mod_optional-hook-export shared
 - mod_optional-hook-import shared
 - mod_optional-fn-import shared
