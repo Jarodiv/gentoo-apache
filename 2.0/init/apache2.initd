@@ -14,7 +14,7 @@ FILENAME=`basename $1`
 
 depend() {
 	need net
-	use mysql dns logger netmount postgres
+	use mysql dns logger netmount postgresql
 	after sshd
 }
 
