@@ -11,6 +11,8 @@
 # creates the tarball, and drops it on 
 # /space/distfiles-local on dev.gentoo.org
 # (It get's your username from CVS information)
+# It also modified the GENTOO_PATCHSTAMP variable in the ebuild
+# to have the same datestamp the tarball is named after.
 
 EBUILD=$1
 G_USER=$2
@@ -52,9 +54,9 @@ fi
 
 
 # detect the tarball name
-EBUILD=$(basename ${EBUILD})
-EBUILD_NAME=${EBUILD/-[0-9]*/}
-TB_VER=${EBUILD/${EBUILD_NAME}-/}
+EBUILD_BASE=$(basename ${EBUILD})
+EBUILD_NAME=${EBUILD_BASE/-[0-9]*/}
+TB_VER=${EBUILD_BASE/${EBUILD_NAME}-/}
 TB_VER=${TB_VER/.ebuild/}
 
 case ${EBUILD_NAME} in
@@ -72,24 +74,34 @@ esac
 
 
 # create tarball
-TB=${TB_NAME}-${TB_VER}
-echo "Creating ${TB}.tar.bz2 from ${TREE}/ ..."
-cp -rl ${TREE} ${TB} || die "Copy failed"
-date -u > ${TB}/DATESTAMP
-echo "Packaged by ${G_USER}" >> ${TB}/DATESTAMP
-tar --create --bzip2 --verbose --exclude=CVS --file ${TB}.tar.bz2 ${TB} || die "Tarball creation failed"
-rm -rf ${TB} || echo "Couldn't clean up, manually remove ${TB}/"
+DATESTAMP=$(date +%Y%m%d)
+TB=${TB_NAME}-${TB_VER}-${DATESTAMP}.tar.bz2
+TB_DIR=${TB_NAME}-${TB_VER}
+echo "Creating ${TB} from ${TREE}/ ..."
+cp -rl ${TREE} ${TB_DIR} || die "Copy failed"
+date -u > ${TB_DIR}/DATESTAMP
+echo "Packaged by ${G_USER}" >> ${TB_DIR}/DATESTAMP
+tar --create --bzip2 --verbose --exclude=CVS --file ${TB} ${TB_DIR} || die "Tarball creation failed"
+rm -rf ${TB_DIR} || echo "Couldn't clean up, manually remove ${TB_DIR}/"
 echo " ... done!"
 echo
 
 # put it on the mirrors
-echo "Putting ${TB}.tar.bz2 on the mirrors ..."
-scp ${TB}.tar.bz2 ${G_USER}@dev.gentoo.org:/space/distfiles-local || die "Couldn't upload tarball"
+echo "Putting ${TB} on the mirrors ..."
+scp ${TB} ${G_USER}@dev.gentoo.org:/space/distfiles-local || die "Couldn't upload tarball"
 echo " ... done!"
 echo
 echo "Please remember it can take up to 24 hours for full propogation"
 echo "Make sure the tarball is on the mirrors before marking a package as stable"
-echo "Also, be sure to copy ${TB}.tar.bz2 to \${DISTFILES} and create the digest."
+echo
+echo "Updating datestamp in ebuild ${EBUILD}"
+cp ${EBUILD} ${EBUILD}.bak
+sed "s/GENTOO_PATCHSTAMP=\"[0-9]*\"/GENTOO_PATCHSTAMP=\"${DATESTAMP}\"/" < ${EBUILD}.bak > ${EBUILD}
+echo
+echo "Please double check the change in the ebuild (should only effect the"
+echo "setting of GENTOO_PATCHSTAMP), copy ${TB} to \${DISTFILES}, and run"
+echo "ebuild \${EBUILD} digest."
+echo
+echo "Make sure to cvs up and echangelog before a repoman commit."
 echo
 echo "All finished!"
-
