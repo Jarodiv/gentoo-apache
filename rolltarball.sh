@@ -89,6 +89,7 @@ echo " ... done!"
 echo
 echo "Please remember it can take up to 24 hours for full propogation"
 echo "Make sure the tarball is on the mirrors before marking a package as stable"
+echo "Also, be sure to copy ${TB}.tar.bz2 to \${DISTFILES} and create the digest."
 echo
 echo "All finished!"
 
