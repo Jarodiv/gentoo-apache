@@ -58,15 +58,19 @@ EBUILD_BASE=$(basename ${EBUILD})
 EBUILD_NAME=${EBUILD_BASE/-[0-9]*/}
 TB_VER=${EBUILD_BASE/${EBUILD_NAME}-/}
 TB_VER=${TB_VER/.ebuild/}
+DATESTAMP=$(date +%Y%m%d)
 
 case ${EBUILD_NAME} in
 	apache)
-		TB_NAME=gentoo-apache
 		TREE=${TB_VER%.*}
+		TB=gentoo-apache-${TB_VER}-${DATESTAMP}.tar.bz2
+		TB_DIR=gentoo-apache-${TB_VER}
+		UPDATE_EBUILD=1
 		;;
 	gentoo-webroot-default)
-		TB_NAME=gentoo-webroot-default
 		TREE=gentoo-webroot-default
+		TB=gentoo-webroot-default-${TB_VER}.tar.bz2
+		TB_DIR=gentoo-webroot-default-${TB_VER}
 		;;
 	*)	
 		die "Unknown ebuild";;
@@ -74,9 +78,6 @@ esac
 
 
 # create tarball
-DATESTAMP=$(date +%Y%m%d)
-TB=${TB_NAME}-${TB_VER}-${DATESTAMP}.tar.bz2
-TB_DIR=${TB_NAME}-${TB_VER}
 echo "Creating ${TB} from ${TREE}/ ..."
 cp -rl ${TREE} ${TB_DIR} || die "Copy failed"
 date -u > ${TB_DIR}/DATESTAMP
@@ -88,18 +89,23 @@ echo
 
 # put it on the mirrors
 echo "Putting ${TB} on the mirrors ..."
-scp ${TB} ${G_USER}@dev.gentoo.org:/space/distfiles-local || die "Couldn't upload tarball"
+#scp ${TB} ${G_USER}@dev.gentoo.org:/space/distfiles-local || die "Couldn't upload tarball"
 echo " ... done!"
 echo
 echo "Please remember it can take up to 24 hours for full propogation"
 echo "Make sure the tarball is on the mirrors before marking a package as stable"
 echo
-echo "Updating datestamp in ebuild ${EBUILD}"
-cp ${EBUILD} ${EBUILD}.bak
-sed "s/GENTOO_PATCHSTAMP=\"[0-9]*\"/GENTOO_PATCHSTAMP=\"${DATESTAMP}\"/" < ${EBUILD}.bak > ${EBUILD}
-echo
-echo "Please double check the change in the ebuild (should only effect the"
-echo "setting of GENTOO_PATCHSTAMP), copy ${TB} to \${DISTFILES}, and run"
+if [ "${UPDATE_EBUILD}" == "1" ]
+then
+	echo "Updating datestamp in ebuild ${EBUILD}"
+	cp ${EBUILD} ${EBUILD}.bak
+	sed "s/GENTOO_PATCHSTAMP=\"[0-9]*\"/GENTOO_PATCHSTAMP=\"${DATESTAMP}\"/" < ${EBUILD}.bak > ${EBUILD}
+	echo
+	echo "Please double check the change in the ebuild (should only effect the"
+	echo "setting of GENTOO_PATCHSTAMP)"
+	echo
+fi
+echo "Copy ${TB} to \${DISTFILES}, and run"
 echo "ebuild \${EBUILD} digest."
 echo
 echo "Make sure to cvs up and echangelog before a repoman commit."
