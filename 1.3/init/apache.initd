@@ -34,7 +34,7 @@ checkconfig() {
 	# check to see if the old config files exist and aren't used
 	if [[ "${CONFIGFILE}" != "/etc/apache/conf/apache.conf" && 
 			-e "/etc/apache/conf/apache.conf" ]]; then
-		eerror "Found old apache.conf in /etc/apache/conf. Configuration locations \n have moved, please check ${CONFIGFILE} to make sure it is correct, \n and remove /etc/apache/conf/apache.conf"
+		eerror "Found old apache.conf in /etc/apache/conf. Configuration locations \n have moved, please check ${CONFIGFILE} to make sure it is correct, \n and remove /etc/apache/conf/apache.conf\n\nPlease see http://dev.gentoo.org/~vericgar/doc/apache-package-refresh.html\n for more information."
 		return 1
 	fi
 	
