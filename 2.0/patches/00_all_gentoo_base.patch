@@ -1,7 +1,7 @@
-diff -Naur httpd-2.0.52/include/httpd.h httpd-2.0.52-gentoo/include/httpd.h
---- httpd-2.0.52/include/httpd.h	2004-08-12 07:22:52.000000000 +0200
-+++ httpd-2.0.52-gentoo/include/httpd.h	2004-10-22 18:07:12.698194320 +0200
-@@ -137,7 +137,7 @@
+diff -Nup -Nrup httpd-2.0.52.orig/include/httpd.h httpd-2.0.52.patched/include/httpd.h
+--- httpd-2.0.52.orig/include/httpd.h	2004-08-12 06:22:52.000000000 +0100
++++ httpd-2.0.52.patched/include/httpd.h	2005-02-18 02:34:22.000000000 +0000
+@@ -137,7 +137,7 @@ extern "C" {
  
  /* The path to the suExec wrapper, can be overridden in Configuration */
  #ifndef SUEXEC_BIN
@@ -10,10 +10,10 @@ diff -Naur httpd-2.0.52/include/httpd.h httpd-2.0.52-gentoo/include/httpd.h
  #endif
  
  /* The timeout for waiting for messages */
-diff -Naur httpd-2.0.52/modules/ssl/ssl_engine_mutex.c httpd-2.0.52-gentoo/modules/ssl/ssl_engine_mutex.c
---- httpd-2.0.52/modules/ssl/ssl_engine_mutex.c	2004-02-09 21:53:20.000000000 +0100
-+++ httpd-2.0.52-gentoo/modules/ssl/ssl_engine_mutex.c	2004-10-22 18:07:12.699194168 +0200
-@@ -41,6 +41,8 @@
+diff -Nup -Nrup httpd-2.0.52.orig/modules/ssl/ssl_engine_mutex.c httpd-2.0.52.patched/modules/ssl/ssl_engine_mutex.c
+--- httpd-2.0.52.orig/modules/ssl/ssl_engine_mutex.c	2004-02-09 20:53:20.000000000 +0000
++++ httpd-2.0.52.patched/modules/ssl/ssl_engine_mutex.c	2005-02-18 02:34:22.000000000 +0000
+@@ -41,6 +41,8 @@ int ssl_mutex_init(server_rec *s, apr_po
      if (mc->nMutexMode == SSL_MUTEXMODE_NONE) 
          return TRUE;
  
@@ -22,10 +22,22 @@ diff -Naur httpd-2.0.52/modules/ssl/ssl_engine_mutex.c httpd-2.0.52-gentoo/modul
      if ((rv = apr_global_mutex_create(&mc->pMutex, mc->szMutexFile,
                                  mc->nMutexMech, p)) != APR_SUCCESS) {
          if (mc->szMutexFile)
-diff -Naur httpd-2.0.52/server/Makefile.in httpd-2.0.52-gentoo/server/Makefile.in
---- httpd-2.0.52/server/Makefile.in	2004-03-08 18:40:37.000000000 +0100
-+++ httpd-2.0.52-gentoo/server/Makefile.in	2004-10-22 18:07:12.700194016 +0200
-@@ -67,6 +67,9 @@
+diff -Nup -Nrup httpd-2.0.52.orig/server/core.c httpd-2.0.52.patched/server/core.c
+--- httpd-2.0.52.orig/server/core.c	2004-09-21 14:21:16.000000000 +0100
++++ httpd-2.0.52.patched/server/core.c	2005-02-18 02:34:22.000000000 +0000
+@@ -2489,7 +2489,7 @@ static void ap_set_version(apr_pool_t *p
+         ap_add_version_component(pconf, AP_SERVER_BASEPRODUCT "/" AP_SERVER_MAJORVERSION);
+     }
+     else {
+-        ap_add_version_component(pconf, AP_SERVER_BASEVERSION " (" PLATFORM ")");
++        ap_add_version_component(pconf, AP_SERVER_BASEVERSION " (Gentoo/Linux)");
+     }
+ 
+     /*
+diff -Nup -Nrup httpd-2.0.52.orig/server/Makefile.in httpd-2.0.52.patched/server/Makefile.in
+--- httpd-2.0.52.orig/server/Makefile.in	2004-03-08 17:40:37.000000000 +0000
++++ httpd-2.0.52.patched/server/Makefile.in	2005-02-18 02:34:22.000000000 +0000
+@@ -67,6 +67,9 @@ exports.c: export_files
  export_vars.h: export_files
  	$(AWK) -f $(top_srcdir)/build/make_var_export.awk `cat $?` > $@
  
@@ -35,22 +47,10 @@ diff -Naur httpd-2.0.52/server/Makefile.in httpd-2.0.52-gentoo/server/Makefile.i
  # Rule to make def file for OS/2 core dll
  ApacheCoreOS2.def: exports.c export_vars.h $(top_srcdir)/os/$(OS_DIR)/core_header.def
  	cat $(top_srcdir)/os/$(OS_DIR)/core_header.def > $@
-diff -Naur httpd-2.0.52/server/core.c httpd-2.0.52-gentoo/server/core.c
---- httpd-2.0.52/server/core.c	2004-09-21 15:21:16.000000000 +0200
-+++ httpd-2.0.52-gentoo/server/core.c	2004-10-22 18:14:55.241876992 +0200
-@@ -2489,7 +2489,7 @@
-         ap_add_version_component(pconf, AP_SERVER_BASEPRODUCT "/" AP_SERVER_MAJORVERSION);
-     }
-     else {
--        ap_add_version_component(pconf, AP_SERVER_BASEVERSION " (" PLATFORM ")");
-+        ap_add_version_component(pconf, AP_SERVER_BASEVERSION " (Gentoo/Linux)");
-     }
- 
-     /*
-diff -Naur httpd-2.0.52/support/apachectl.in httpd-2.0.52-gentoo/support/apachectl.in
---- httpd-2.0.52/support/apachectl.in	2004-08-23 17:07:18.000000000 +0200
-+++ httpd-2.0.52-gentoo/support/apachectl.in	2004-10-22 20:23:24.986817608 +0200
-@@ -40,11 +40,16 @@
+diff -Nup -Nrup httpd-2.0.52.orig/support/apachectl.in httpd-2.0.52.patched/support/apachectl.in
+--- httpd-2.0.52.orig/support/apachectl.in	2004-08-23 16:07:18.000000000 +0100
++++ httpd-2.0.52.patched/support/apachectl.in	2005-02-18 02:43:59.000000000 +0000
+@@ -40,17 +40,25 @@ ARGV="$@"
  # --------------------                              --------------------
  # 
  # the path to your httpd binary, including options if necessary
@@ -70,10 +70,34 @@ diff -Naur httpd-2.0.52/support/apachectl.in httpd-2.0.52-gentoo/support/apachec
  fi
  #
  # a command that outputs a formatted text version of the HTML at the
-diff -Naur httpd-2.0.52/support/apxs.in httpd-2.0.52-gentoo/support/apxs.in
---- httpd-2.0.52/support/apxs.in	2004-02-09 21:59:49.000000000 +0100
-+++ httpd-2.0.52-gentoo/support/apxs.in	2004-10-22 18:07:12.703193560 +0200
-@@ -198,19 +198,6 @@
+ # url given on the command line.  Designed for lynx, however other
+ # programs may work.  
+ LYNX="lynx -dump"
++if ! type -p lynx 2>&1 >/dev/null; then
++	LYNX=no
++fi
+ #
+ # the URL to your server's mod_status status page.  If you do not
+ # have one, then status and fullstatus will not work.
+@@ -74,6 +82,14 @@ if [ "x$ARGV" = "x" ] ; then 
+     ARGV="-h"
+ fi
+ 
++if [ "${LYNX}" = "no" -a "${ARGV}" = "status" -o "${ARGV}" = "fullstatus" ]; then
++	echo >&2 "lynx not found!"
++	echo >&2 ""
++	echo >&2 "You need to emerge 'net-www/lynx' for status monitoring via the"
++	echo >&2 "'status' and 'fullstatus' commands to work."
++	exit 1
++fi
++
+ case $ARGV in
+ start|stop|restart|graceful)
+     $HTTPD -k $ARGV
+diff -Nup -Nrup httpd-2.0.52.orig/support/apxs.in httpd-2.0.52.patched/support/apxs.in
+--- httpd-2.0.52.orig/support/apxs.in	2004-02-09 20:59:49.000000000 +0000
++++ httpd-2.0.52.patched/support/apxs.in	2005-02-18 02:34:22.000000000 +0000
+@@ -198,19 +198,6 @@ if ($0 =~ m:support/apxs$:) {
      ($httpd = $0) =~ s:support/apxs$::;
  }
  

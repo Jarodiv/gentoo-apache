@@ -1,7 +1,7 @@
-diff -Naur apache_1.3.31/Makefile.tmpl apache_1.3.31-gentoo/Makefile.tmpl
---- apache_1.3.31/Makefile.tmpl	2004-02-20 23:40:50.000000000 +0100
-+++ apache_1.3.31-gentoo/Makefile.tmpl	2004-10-24 09:29:32.904407712 +0200
-@@ -366,7 +366,6 @@
+diff -Nup -Nrup apache_1.3.33.orig/Makefile.tmpl apache_1.3.33.patched/Makefile.tmpl
+--- apache_1.3.33.orig/Makefile.tmpl	2004-02-20 22:40:50.000000000 +0000
++++ apache_1.3.33.patched/Makefile.tmpl	2005-02-18 02:56:43.000000000 +0000
+@@ -366,7 +366,6 @@ install-binsupport:
  	fi; \
  	echo "$(INSTALL_SCRIPT) $(TOP)/$(SRC)/support/apachectl[*] $(root)$(sbindir)/$${apachectl}"; \
  	sed -e 's;PIDFILE=.*;PIDFILE=$(runtimedir)/$(TARGET).pid;' \
@@ -9,10 +9,10 @@ diff -Naur apache_1.3.31/Makefile.tmpl apache_1.3.31-gentoo/Makefile.tmpl
  		< $(TOP)/$(SRC)/support/apachectl > $(TOP)/$(SRC)/.apaci.install.tmp && \
  		$(INSTALL_SCRIPT) $(TOP)/$(SRC)/.apaci.install.tmp $(root)$(sbindir)/$${apachectl}; \
  	echo "$(INSTALL_DATA) $(TOP)/$(SRC)/support/apachectl.8 $(root)$(mandir)/man8/$${apachectl}.8"; \
-diff -Naur apache_1.3.31/src/support/apachectl apache_1.3.31-gentoo/src/support/apachectl
---- apache_1.3.31/src/support/apachectl	2004-02-20 23:02:24.000000000 +0100
-+++ apache_1.3.31-gentoo/src/support/apachectl	2004-10-24 09:29:32.907407256 +0200
-@@ -40,7 +40,8 @@
+diff -Nup -Nrup apache_1.3.33.orig/src/support/apachectl apache_1.3.33.patched/src/support/apachectl
+--- apache_1.3.33.orig/src/support/apachectl	2004-02-20 22:02:24.000000000 +0000
++++ apache_1.3.33.patched/src/support/apachectl	2005-02-18 03:00:53.000000000 +0000
+@@ -40,12 +40,16 @@
  PIDFILE=/usr/local/apache/logs/httpd.pid
  #
  # the path to your httpd binary, including options if necessary
@@ -22,3 +22,26 @@ diff -Naur apache_1.3.31/src/support/apachectl apache_1.3.31-gentoo/src/support/
  #
  # a command that outputs a formatted text version of the HTML at the
  # url given on the command line.  Designed for lynx, however other
+ # programs may work.  
+ LYNX="lynx -dump"
++if ! type -p lynx 2>&1 >/dev/null; then
++	LYNX=no
++fi
+ #
+ # the URL to your server's mod_status status page.  If you do not
+ # have one, then status and fullstatus will not work.
+@@ -60,6 +64,14 @@ if [ "x$ARGV" = "x" ] ; then 
+     ARGS="help"
+ fi
+ 
++if [ "${LYNX}" = "no" -a "${ARGV}" = "status" -o "${ARGV}" = "fullstatus" ]; then
++	echo >&2 "lynx not found!"
++	echo >&2 ""
++	echo >&2 "You need to emerge 'net-www/lynx' for status monitoring via the"
++	echo >&2 "'status' and 'fullstatus' commands to work."
++	exit 1
++fi
++
+ for ARG in $@ $ARGS
+ do
+     # check for pidfile
