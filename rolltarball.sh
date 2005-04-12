@@ -14,20 +14,160 @@
 # It also modified the GENTOO_PATCHSTAMP variable in the ebuild
 # to have the same datestamp the tarball is named after.
 
-EBUILD=$1
-G_USER=$2
+# -------------------------------------------------------------
+# import some functions and configs
+
+. /sbin/functions.sh
+. /etc/make.globals
+. /etc/make.conf
 
 die() {
-	echo $@
+	eerror $@
 	exit 1
 }
 
+# void einfol(level, text...)
+#
+# print only when verbosity level equal or higher than $1
+einfol() {
+	if [ "${VERBOSE}" -ge "${1}" ]; then
+		shift 1
+		if [ $# -ne 0 ]; then
+			einfo "${*}"
+		else
+			echo
+		fi
+	fi
+}
 
-if [ -z "${EBUILD}" ]
-then
-	die "You must specify the ebuild this tarball is for!"
+# -------------------------------------------------------------
+# configuration w/ default values
+
+EBUILD=
+G_USER=
+VERBOSE=0 				# verbosity level
+DRY_RUN= 				# does nothing (yet)
+UPLOAD= 				# upload tarball?
+DISTLOCAL= 				# copy tarball to DISTDIR
+DIGEST= 				# -> and update digests
+
+# -------------------------------------------------------------
+# parse command-line arguments
+
+usage_error() {
+	if [ $# -ne 0 ]; then
+		eerror "Usage error: ${*}"
+		echo
+	fi
+	einfo "usage: $0 [--dry-run] [--verbose|-v] [--upload|-p]"
+	einfo "           [--user=NAME|-u NAME] [--dist-local|-d]"
+	einfo "           [--digest|-g] [--stfu]"
+	echo  "           /path/to/apache-herd.ebuild"
+	echo
+	einfo "You may specify -v repeatily to increase verbosity."
+	einfo "short arguments may be glued together (like -vv or -dgp)."
+	exit 1
+}
+
+while test $# != 0; do
+	case $1 in
+		--*=*)
+			opt_key=`expr "x$1" : 'x\([^=]*\)='`
+			opt_val=`expr "x$1" : 'x[^=]*=\(.*\)'`
+			opt_type=long
+			;;
+		-*)
+			opt_key=$1
+			opt_val=$2
+			opt_type=short
+			;;
+		*)
+			opt_key=
+			opt_val=$1
+			opt_type=raw
+			;;
+	esac
+
+	einfol 3 "key($opt_key) value($opt_val)"
+
+	if [ "${opt_key}" = "" ]; then
+		# raw arguments are supposed to be ebuild location(s)
+		EBUILD=${opt_val}
+		shiftNum=1
+	else
+		shiftNum=1
+		case ${opt_key} in
+			--silent|--quiet|--stfu|--STFU) # yeah, STFU is what I like most ;-)
+				VERBOSE=-1
+				;;
+			--verbose)
+				VERBOSE=$[VERBOSE + 1]
+				;;
+			-v)
+				VERBOSE=$[VERBOSE + 1]
+				;;
+			-vv)
+				VERBOSE=$[VERBOSE + 2]
+				;;
+			-vvv)
+				VERBOSE=$[VERBOSE + 3]
+				;;
+			--dry-run)
+				DRY_RUN=1
+				;;
+			--user)
+				G_USER=${opt_val}
+				test "${opt_type}" = "short" && shiftNum=2
+				;;
+			-u)
+				G_USER=${opt_val}
+				shiftNum=2
+				;;
+			--upload|-p)
+				UPLOAD=1
+				;;
+			--dist-local|-d)
+				DISTLOCAL=1
+				;;
+			--digest)
+				DIGEST=1
+				;;
+			-g)
+				DIGEST=1
+				;;
+			-dg|-gd)
+				DISTLOCAL=1
+				DIGEST=1
+				;;
+			-dgp|-dpg|-gdp|-gpd|-pdg|-pgd)
+				DISTLOCAL=1
+				DIGEST=1
+				UPLOAD=1
+				;;
+			*)
+				usage_error "Unknown argument '${opt_key}'"
+				;;
+		esac
+	fi
+	shift ${shiftNum}
+done
+
+# -------------------------------------------------------------
+# argument validation and post-handling
+
+if [ "${VERBOSE}" -ge 2 ]; then
+	exec 9>&1
+else
+	exec 9>/dev/null
 fi
 
+if [ -z "${EBUILD}" ]; then
+	usage_error "No ebuild specified."
+fi
+
+if [ -z "${DISTLOCAL}" ] && [ -n "${DIGEST}" ]; then
+	usage_error "digest can be only created when --dist-local is specified."
+fi
 
 # detect username
 if [ "x${G_USER}" == "x" ]
@@ -36,29 +176,36 @@ then
 	G_USER=${G_USER/:ext:/}
 	G_USER=${G_USER%@*}
 fi
-echo "Gentoo developer: ${G_USER}"
-echo
+einfol 1 "Gentoo developer: ${G_USER}"
 
+# -------------------------------------------------------------
 # Check for updates
-echo "Updating the tree and checking for program updates ..."
+
+einfol 1 "Updating the tree and checking for program updates ..."
 my_mtime=$(stat --format=%Y $0)
-cvs up || die "cvs up failed!"
+cvs up >&9 || die "cvs up failed!"
 new_mtime=$(stat --format=%Y $0)
-echo " ... done!"
-echo
+einfol 2 "... done!"
+einfol 2
 
 if [ "${my_mtime}" -ne "${new_mtime}" ]
 then
 	die "I have been updated, please restart me!"
 fi
 
-
+# -------------------------------------------------------------
 # detect the tarball name
+
 EBUILD_BASE=$(basename ${EBUILD})
 EBUILD_NAME=${EBUILD_BASE/-[0-9]*/}
 TB_VER=${EBUILD_BASE/${EBUILD_NAME}-/}
 TB_VER=${TB_VER/.ebuild/}
 DATESTAMP=$(date +%Y%m%d)
+
+einfol 2 "EBUILD_BASE : ${EBUILD_BASE}"
+einfol 2 "EBUILD_NAME : ${EBUILD_NAME}"
+einfol 2 "TB_VER      : ${TB_VER}"
+einfol 2 "DATESTAMP   : ${DATESTAMP}"
 
 case ${EBUILD_NAME} in
 	apache)
@@ -73,41 +220,56 @@ case ${EBUILD_NAME} in
 		TB_DIR=gentoo-webroot-default-${TB_VER}
 		;;
 	*)	
-		die "Unknown ebuild";;
+		die "Unknown ebuild (ebuild name: ${EBUILD_NAME})";;
 esac
 
-
+# -------------------------------------------------------------
 # create tarball
-echo "Creating ${TB} from ${TREE}/ ..."
+
+einfol 1 "Creating ${TB} from ${TREE}/ ..."
 cp -rl ${TREE} ${TB_DIR} || die "Copy failed"
 date -u > ${TB_DIR}/DATESTAMP
-echo "Packaged by ${G_USER}" >> ${TB_DIR}/DATESTAMP
-tar --create --bzip2 --verbose --exclude=CVS --file ${TB} ${TB_DIR} || die "Tarball creation failed"
-rm -rf ${TB_DIR} || echo "Couldn't clean up, manually remove ${TB_DIR}/"
-echo " ... done!"
-echo
+einfol 1 "Packaged by ${G_USER}" >> ${TB_DIR}/DATESTAMP
+tar --create --bzip2 --verbose --exclude=CVS --file ${TB} ${TB_DIR} >&9 || die "Tarball creation failed"
+rm -rf ${TB_DIR} || ewarn "Couldn't clean up, manually remove ${TB_DIR}/"
+einfol 2 "... done!"
+einfol 2
 
-# put it on the mirrors
-echo "Putting ${TB} on the mirrors ..."
-scp ${TB} ${G_USER}@dev.gentoo.org:/space/distfiles-local || die "Couldn't upload tarball"
-echo " ... done!"
-echo
-echo "Please remember it can take up to 24 hours for full propogation"
-echo "Make sure the tarball is on the mirrors before marking a package as stable"
-echo
-if [ "${UPDATE_EBUILD}" == "1" ]
-then
-	echo "Updating datestamp in ebuild ${EBUILD}"
-	cp ${EBUILD} ${EBUILD}.bak
-	sed "s/GENTOO_PATCHSTAMP=\"[0-9]*\"/GENTOO_PATCHSTAMP=\"${DATESTAMP}\"/" < ${EBUILD}.bak > ${EBUILD}
-	echo
-	echo "Please double check the change in the ebuild (should only effect the"
-	echo "setting of GENTOO_PATCHSTAMP)"
-	echo
+# -------------------------------------------------------------
+if [ "${UPLOAD}" = "1" ]; then
+	einfol 1 "Putting ${TB} on the mirrors ..."
+	scp ${TB} ${G_USER}@dev.gentoo.org:/space/distfiles-local >&9 || die "Couldn't upload tarball"
+	einfol 2 "... done!"
+	einfol 1
+	einfol 1 "Please remember it can take up to 24 hours for full propogation"
+	einfol 1 "Make sure the tarball is on the mirrors before marking a package as stable"
+	einfol 1
 fi
-echo "Copy ${TB} to \${DISTFILES}, and run"
-echo "ebuild \${EBUILD} digest."
-echo
-echo "Make sure to cvs up and echangelog before a repoman commit."
-echo
-echo "All finished!"
+
+# -------------------------------------------------------------
+if [ "${UPDATE_EBUILD}" == "1" ]; then
+	einfol 1 "Updating datestamp in ebuild ${EBUILD}"
+	sed -i~ -e "s/GENTOO_PATCHSTAMP=\"[0-9]*\"/GENTOO_PATCHSTAMP=\"${DATESTAMP}\"/" ${EBUILD} > ${EBUILD}
+	einfol 1
+
+	einfol 0 "Please double check the change in the ebuild (should only effect the"
+	einfol 0 "setting of GENTOO_PATCHSTAMP)"
+	einfol 0
+fi
+
+# -------------------------------------------------------------
+if [ -n "${DISTLOCAL}" ]; then
+	cp -v ${TB} ${DISTDIR} >&9
+	if [ -n "${DIGEST}" ]; then
+		ebuild ${EBUILD} digest >&9 || ewarn "Sorry. creation digest failed"
+	fi
+else
+	einfol 0 "Copy ${TB} to \${DISTFILES}, and run"
+	einfol 0 "ebuild \${EBUILD} digest."
+	einfol 0
+	einfol 0 "Make sure to cvs up and echangelog before a repoman commit."
+fi
+
+einfol 3 "Done."
+
+# vim:ai:noet:ts=4:nowrap
