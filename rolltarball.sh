@@ -62,7 +62,7 @@ usage_error() {
 	einfo "usage: $0 [--dry-run] [--verbose|-v] [--upload|-p]"
 	einfo "           [--user=NAME|-u NAME] [--dist-local|-d]"
 	einfo "           [--digest|-g] [--stfu]"
-	echo  "           /path/to/apache-herd.ebuild"
+	einfo "           /path/to/apache-herd.ebuild"
 	echo
 	einfo "You may specify -v repeatily to increase verbosity."
 	einfo "short arguments may be glued together (like -vv or -dgp)."
