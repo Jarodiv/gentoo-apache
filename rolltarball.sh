@@ -249,7 +249,7 @@ fi
 # -------------------------------------------------------------
 if [ "${UPDATE_EBUILD}" == "1" ]; then
 	einfol 1 "Updating datestamp in ebuild ${EBUILD}"
-	sed -i~ -e "s/GENTOO_PATCHSTAMP=\"[0-9]*\"/GENTOO_PATCHSTAMP=\"${DATESTAMP}\"/" ${EBUILD} > ${EBUILD}
+	sed -i -e "s/GENTOO_PATCHSTAMP=\"[0-9]*\"/GENTOO_PATCHSTAMP=\"${DATESTAMP}\"/" ${EBUILD}
 	einfol 1
 
 	einfol 0 "Please double check the change in the ebuild (should only effect the"
