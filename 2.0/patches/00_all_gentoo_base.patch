@@ -83,10 +83,10 @@ diff -Nup -Nrup httpd-2.0.52.orig/support/apachectl.in httpd-2.0.52.patched/supp
      ARGV="-h"
  fi
  
-+if [ "${LYNX}" = "no" -a "${ARGV}" = "status" -o "${ARGV}" = "fullstatus" ]; then
++if [ "${LYNX}" = "no" ] && [ "${ARGV}" = "status" -o "${ARGV}" = "fullstatus" ]; then
 +	echo >&2 "lynx not found!"
 +	echo >&2 ""
-+	echo >&2 "You need to emerge 'net-www/lynx' for status monitoring via the"
++	echo >&2 "You need to emerge 'www-client/lynx' for status monitoring via the"
 +	echo >&2 "'status' and 'fullstatus' commands to work."
 +	exit 1
 +fi
