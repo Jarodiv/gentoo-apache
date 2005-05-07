@@ -229,7 +229,7 @@ esac
 einfol 1 "Creating ${TB} from ${TREE}/ ..."
 cp -rl ${TREE} ${TB_DIR} || die "Copy failed"
 date -u > ${TB_DIR}/DATESTAMP
-einfol 1 "Packaged by ${G_USER}" >> ${TB_DIR}/DATESTAMP
+echo "Packaged by ${G_USER}" >> ${TB_DIR}/DATESTAMP
 tar --create --bzip2 --verbose --exclude=CVS --file ${TB} ${TB_DIR} >&9 || die "Tarball creation failed"
 rm -rf ${TB_DIR} || ewarn "Couldn't clean up, manually remove ${TB_DIR}/"
 einfol 2 "... done!"
