@@ -46,19 +46,11 @@ checkconfig() {
 		return 1
 	fi
 	
-	if [ "x${MPM}" != "x" ]; then
-		if [ ! -x /usr/sbin/apache2.${MPM} ]; then
-			eerror "Unable to find specified MPM: ${MPM}"
-			return 1
-		fi
-		MY_MPM=".${MPM}"
-	fi
-	
 	[ -n "${SERVERROOT}" ] && APACHE2_OPTS="${APACHE2_OPTS} -d ${SERVERROOT}"
 	[ -n "${CONFIGFILE}" ] && APACHE2_OPTS="${APACHE2_OPTS} -f ${CONFIGFILE}"
 	[ -n "${STARTUPERRORLOG}" ] && APACHE2_OPTS="${APACHE2_OPTS} -E ${STARTUPERRORLOG}"
 	
-	APACHE2="env -i PATH=${PATH} /usr/sbin/apache2${MY_MPM}"
+	APACHE2="env -i PATH=${PATH} /usr/sbin/apache2"
 	
 	$APACHE2 ${APACHE2_OPTS} -t 1>/dev/null 2>&1
 	ret=$?

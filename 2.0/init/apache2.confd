@@ -28,11 +28,6 @@
 # ServerRoot setting
 #SERVERROOT=/usr/lib/apache2
 
-# MPM to use
-# to get available MPMs:
-#  for i in `ls /usr/sbin/apache2.*`; do echo `basename ${i/apache2./}`;done
-#MPM=prefork
-
 # Configuration file location
 # - If this does NOT start with a '/', then it is treated relative to
 # $SERVERROOT by Apache
