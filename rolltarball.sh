@@ -1,200 +1,372 @@
 #!/bin/bash
+#
+# rolltarball.sh - rolls a tarball for distribution
+#
 # Copyright 2005 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
 # $Header$
+#
+# Before commiting large changes, or if you don't completely understand a 
+# small change you are about to commit, please consult the Primary Maintainer
+# first to make sure it won't break things. Thanks!
+# 
+# Contributors:
+#	Michael Stewart <vericgar@gentoo.org> (Primary Maintainer)
+#	Christian Parpart <trapni@gentoo.org>
+#
+# Changes:
+#	05-Jun-2005	Complete rewrite to clean up code
+#
+MYVERSION='$Revision$'
+MYVERSION=${MYVERSION#* }
+MYVERSION=${MYVERSION% *}
 
-# This utility rolls a tarball.
-# It takes a single argument:
-#	the path to the ebuild the tarball is for.
-# A second optional argument is the gentoo username
-# It autodetects what the name of the tarball should be,
-# creates the tarball, and drops it on 
-# /space/distfiles-local on dev.gentoo.org
-# (It get's your username from CVS information)
-# It also modified the GENTOO_PATCHSTAMP variable in the ebuild
-# to have the same datestamp the tarball is named after.
+# ********** Begin functions **********
 
-# -------------------------------------------------------------
-# import some functions and configs
+usage() {
+	
+	if [ -n "$1" ]
+	then
+		eerror $1
+	else
+		cat <<-USAGE_HEADER
+			Gentoo Apache Tarball Generator
+			Version: ${MYVERSION}
+		USAGE_HEADER
+	fi
 
-. /sbin/functions.sh
-. /etc/make.globals
-. /etc/make.conf
+# there are no tabs in the following!!!
+	cat <<USAGE
+
+Usage: $0 [options] ebuild
+
+Where options is any of:
+-a  --ask           Display what would be done, then ask to do it (default)
+-A  --no-ask        Disable ask
+-t  --color         Turn on color
+-T  --no-color      Turn off color
+-c  --copyto=path   Copy tarball to local path (default: /usr/portage/distfiles)
+-C  --no-copy       Don't copy tarball
+-d  --devspace      Upload to devspace (default)
+-D  --no-devspace   Don't upload to devspace
+-g  --digest        Create the digest (default)
+-G  --no-digest     Don't create the digest
+-e  --ebuild        Modify ebuild (default)
+-E  --no-ebuild     Don't modify ebuild
+-h  --help          Display this output
+-m  --mirror        Upload to mirror://gentoo
+-M  --no-mirror     Don't upload to mirror://gentoo (default)
+-p  --pretend       Only display what would be done
+    --quiet         Set verbosity to 0
+-q                  Lower verbosity by 1
+-u  --user=username Gentoo Username (Default: auto-detected)
+    --verbosity=n   Verbosity Level (0-4)
+-v                  Increase verbosity by 1
+
+For convienence, ~/.apache-rolltarball will be sourced so you can set any 
+of the following instead of using the command line:
+
+ASK            Ask before doing anything (0 = no, 1 = yes)
+COLOR          Output in color (0 = no, 1 = yes)
+COPYTO         Local path to copy tarball to (set to blank to disable copy)
+G_USER         Gentoo Username
+MOD_EBUILD     Modify ebuild (0 = no, 1 = yes)
+UPLOAD_DEV     Whether to upload to devspace (0 = no, 1 = yes)
+UPLOAD_MIRROR  Whether to upload to gentoo mirrors (0 = no, 1 = yes)
+VERBOSE        Level of verbosity (0-3)
+
+USAGE
+
+	exit
+}
+
+
+eerror() {
+	echo -e " ${BAD}*${NORMAL} ${*}"
+}
+
 
 die() {
-	eerror $@
+	if [ "$#" -gt 0 ]
+	then
+		eerror ${*}
+	fi
 	exit 1
 }
 
-# void einfol(level, text...)
-#
-# print only when verbosity level equal or higher than $1
-einfol() {
-	if [ "${VERBOSE}" -ge "${1}" ]; then
-		shift 1
-		if [ $# -ne 0 ]; then
-			einfo "${*}"
-		else
-			echo
+
+einfo() {
+	if [ "${VERBOSE}" -ge "1" ]
+	then
+		echo -e " ${GOOD}*${NORMAL} ${*}"
+	fi
+}
+
+
+ebegin() {
+	if [ "${VERBOSE}" -ge "1" ]
+	then
+		echo -e " ${GOOD}*${NORMAL} ${*}..."
+	fi
+}
+
+
+eend() {
+
+	if [ "$#" -eq 0 ] || ([ -n "$1" ] && [ "$1" -eq 0 ])
+	then
+		if [ "${VERBOSE}" -ge "1" ]
+		then
+			echo -e "${ENDCOL}  ${BRACKET}[ ${GOOD}ok${BRACKET} ]${NORMAL}"
 		fi
-	fi
-}
-
-# -------------------------------------------------------------
-# configuration w/ default values
-
-EBUILD=
-G_USER=
-VERBOSE=0 				# verbosity level
-DRY_RUN= 				# does nothing (yet)
-UPLOAD= 				# upload tarball?
-DISTLOCAL= 				# copy tarball to DISTDIR
-DIGEST= 				# -> and update digests
-
-# -------------------------------------------------------------
-# parse command-line arguments
-
-usage_error() {
-	if [ $# -ne 0 ]; then
-		eerror "Usage error: ${*}"
-		echo
-	fi
-	einfo "usage: $0 [--dry-run] [--verbose|-v] [--upload|-p]"
-	einfo "           [--user=NAME|-u NAME] [--dist-local|-d]"
-	einfo "           [--digest|-g] [--stfu]"
-	einfo "           /path/to/apache-herd.ebuild"
-	echo
-	einfo "You may specify -v repeatily to increase verbosity."
-	einfo "short arguments may be glued together (like -vv or -dgp)."
-	exit 1
-}
-
-while test $# != 0; do
-	case $1 in
-		--*=*)
-			opt_key=`expr "x$1" : 'x\([^=]*\)='`
-			opt_val=`expr "x$1" : 'x[^=]*=\(.*\)'`
-			opt_type=long
-			;;
-		-*)
-			opt_key=$1
-			opt_val=$2
-			opt_type=short
-			;;
-		*)
-			opt_key=
-			opt_val=$1
-			opt_type=raw
-			;;
-	esac
-
-	einfol 3 "key($opt_key) value($opt_val)"
-
-	if [ "${opt_key}" = "" ]; then
-		# raw arguments are supposed to be ebuild location(s)
-		EBUILD=${opt_val}
-		shiftNum=1
 	else
-		shiftNum=1
-		case ${opt_key} in
-			--silent|--quiet|--stfu|--STFU) # yeah, STFU is what I like most ;-)
-				VERBOSE=-1
-				;;
-			--verbose)
-				VERBOSE=$[VERBOSE + 1]
-				;;
-			-v)
-				VERBOSE=$[VERBOSE + 1]
-				;;
-			-vv)
-				VERBOSE=$[VERBOSE + 2]
-				;;
-			-vvv)
-				VERBOSE=$[VERBOSE + 3]
-				;;
-			--dry-run)
-				DRY_RUN=1
-				;;
-			--user)
-				G_USER=${opt_val}
-				test "${opt_type}" = "short" && shiftNum=2
-				;;
-			-u)
-				G_USER=${opt_val}
-				shiftNum=2
-				;;
-			--upload|-p)
-				UPLOAD=1
-				;;
-			--dist-local|-d)
-				DISTLOCAL=1
-				;;
-			--digest)
-				DIGEST=1
-				;;
-			-g)
-				DIGEST=1
-				;;
-			-dg|-gd)
-				DISTLOCAL=1
-				DIGEST=1
-				;;
-			-dgp|-dpg|-gdp|-gpd|-pdg|-pgd)
-				DISTLOCAL=1
-				DIGEST=1
-				UPLOAD=1
-				;;
-			*)
-				usage_error "Unknown argument '${opt_key}'"
-				;;
-		esac
+		retval=$1
+
+		if [ "$#" -ge 2 ]
+		then
+			shift
+			eerror "${*}"
+		fi
+		if [ "${VERBOSE}" -ge "1" ]
+		then
+			echo -e "${ENDCOL}  ${BRACKET}[ ${BAD}!!${BRACKET} ]${NORMAL}"
+		fi	
+		return ${retval}
 	fi
-	shift ${shiftNum}
+
+}		
+
+
+ewarn() {
+	if [ "${VERBOSE}" -ge "2" ]
+	then
+		echo -e " ${WARN}*${NORMAL} ${*}"
+	fi
+}
+
+
+edebug() {
+	if [ "${VERBOSE}" -ge "4" ]
+	then
+		echo -e " ${HILITE}*${NORMAL} ${*}"
+	fi
+}
+
+
+nocolor() {
+	COLS="80"
+	ENDCOL=" *****>>"
+	GOOD=
+	WARN=
+	BAD=
+	NORMAL=
+	HILITE=
+	BRACKET=
+	COLOR=0
+	edebug "Color disabled"
+}
+
+
+color() {
+	COLS=$(stty size 2> /dev/null)
+	COLS=${COLS#* }
+	COLS=$((${COLS} - 7))
+	ENDCOL=$'\e[A\e['${COLS}'G'
+	GOOD=$'\e[32;01m'
+	WARN=$'\e[33;01m'
+	BAD=$'\e[31;01m'
+	NORMAL=$'\e[0m'
+	HILITE=$'\e[36;01m'
+	BRACKET=$'\e[34;01m'
+	COLOR=1
+	edebug "Color enabled"
+}	
+
+# ********** End functions, begin primary code **********
+
+# Defaults
+# If you change these, change usage()
+ASK=1
+COLOR=1
+COPYTO=/usr/portage/distfiles
+DIGEST=1
+G_USER=
+MOD_EBUILD=1
+PRETEND=0
+UPLOAD_DEV=1
+UPLOAD_MIRROR=0
+VERBOSE=1
+
+# load configuration
+if [ -e ~/.apache-rolltarball ]
+then
+	. ~/.apache-rolltarball
+	edebug "Loaded configuration from ~/.apache-rolltarball"
+fi
+
+if [ "${COLOR}" -eq "0" ]
+then
+	nocolor;
+else
+	color;
+fi
+
+# Process command line
+until [ -z "$1" ]
+do
+	case "$1" in
+		--*)
+			# long options
+			OPTFULL=${1/--/}
+			OPT=${OPTFULL%=*}
+			VALUE=${OPTFULL#*=}
+			case "${OPT}" in
+				ask)			ASK=1;;
+				no-ask)			ASK=0;;
+				color)			color;;
+				no-color)		nocolor;;
+				copyto)			COPYTO=${VALUE};;
+				no-copy)		COPYTO=;;
+				devspace)		UPLOAD_DEV=1;;
+				no-devspace)	UPLOAD_DEV=0;;
+				digest)			DIGEST=1;;
+				no-digest)		DIGEST=0;;
+				ebuild)			MOD_EBUILD=1;;
+				no-ebuild)		MOD_EBUILD=0;;
+				help)			usage;;
+				mirror)			UPLOAD_MIRROR=1;;
+				no-mirror)		UPLOAD_MIRROR=0;;
+				pretend)		PRETEND=1;;
+				quiet)			VERBOSE=0;;
+				user)			G_USER=${VALUE};;
+				verbosity)		VERBOSE=${VALUE};;
+				*)
+					usage "Unknown option: --${OPT}"
+				;;
+			esac
+			shift
+		;;
+		-*)
+			# short options
+			OPTLIST=${1/-/}
+			shift
+			while [ -n "${OPTLIST}" ]
+			do
+				OPT=${OPTLIST:0:1}
+				OPTLIST=${OPTLIST#?}
+				case "${OPT}" in
+					a)	ASK=1;;
+					A)	ASK=0;;
+					c)	COPYTO=$1; shift;;
+					C)	COPYTO=;;
+					d)	UPLOAD_DEV=1;;
+					D)	UPLOAD_DEV=0;;
+					e)	MOD_EBUILD=1;;
+					E)	MOD_EBUILD=0;;
+					g)	DIGEST=1;;
+					G)	DIGEST=0;;
+					h)	usage;;
+					m)	UPLOAD_MIRROR=1;;
+					M)	UPLOAD_MIRROR=0;;
+					p)	PRETEND=1;;
+					q)	VERBOSE=$((${VERBOSE} - 1));;
+					t)	color;;
+					T)	nocolor;;
+					u)	G_USER=$1; shift;;
+					v)	VERBOSE=$((${VERBOSE} + 1));;
+					*)
+						usage "Unknown option: -${OPT}"
+					;;
+				esac
+			done
+		;;
+		*)
+			if [ -n "${EBUILD}" ]
+			then
+				usage "Only one ebuild can be specified"
+			else
+				EBUILD=$1
+				shift
+			fi
+		;;
+	esac
 done
 
-# -------------------------------------------------------------
-# argument validation and post-handling
+if [ -z "${EBUILD}" ]
+then
+	usage "You must specify an ebuild"
+fi
 
-if [ "${VERBOSE}" -ge 2 ]; then
+if [ "${EBUILD##*.}" != "ebuild" ]
+then
+	usage "You must specify an ebuild"
+fi
+
+if [ ! -f ${EBUILD} ]
+then
+	die "Ebuild ${EBUILD} does not exist or is not a file"
+fi
+
+if [ "${VERBOSE}" -lt "0" ]
+then
+	VERBOSE=0
+fi
+
+if [ "${VERBOSE}" -gt "4" ]
+then
+	VERBOSE=4
+fi
+
+if [ "${VERBOSE}" -ge "3" ]
+then
+	edebug "Program output enabled"
 	exec 9>&1
 else
+	edebug "Program output disabled"
 	exec 9>/dev/null
 fi
 
-if [ -z "${EBUILD}" ]; then
-	usage_error "No ebuild specified."
+if [ "${ASK}" -eq "1" ]
+then
+	PRETEND=1
 fi
 
-if [ -z "${DISTLOCAL}" ] && [ -n "${DIGEST}" ]; then
-	usage_error "digest can be only created when --dist-local is specified."
-fi
-
-# detect username
-if [ "x${G_USER}" == "x" ]
+if [ -z "${G_USER}" ]
 then
 	G_USER=$(cat CVS/Root)
 	G_USER=${G_USER/:ext:/}
 	G_USER=${G_USER%@*}
+	einfo "Detected Gentoo Developer: ${G_USER}"
 fi
-einfol 1 "Gentoo developer: ${G_USER}"
 
-# -------------------------------------------------------------
-# Check for updates
+edebug "Current configuration:"
+edebug "  ASK: ${ASK}"
+edebug "  COLOR: ${COLOR}"
+edebug "  COPYTO: ${COPYTO}"
+edebug "  DIGEST: ${DIGEST}"
+edebug "  EBUILD: ${EBUILD}"
+edebug "  G_USER: ${G_USER}"
+edebug "  MOD_EBUILD: ${MOD_EBUILD}"
+edebug "  PRETEND: ${PRETEND}"
+edebug "  UPLOAD_DEV: ${UPLOAD_DEV}"
+edebug "  UPLOAD_MIRROR: ${UPLOAD_MIRROR}"
+edebug "  VERBOSE: ${VERBOSE}"
 
-einfol 1 "Updating the tree and checking for program updates ..."
 my_mtime=$(stat --format=%Y $0)
-cvs up >&9 || die "cvs up failed!"
-new_mtime=$(stat --format=%Y $0)
-einfol 2 "... done!"
-einfol 2
 
+ebegin "Updating tree"
+cvs up >&9
+eend $? "cvs update failed!" || die
+
+new_mtime=$(stat --format=%Y $0)
 if [ "${my_mtime}" -ne "${new_mtime}" ]
 then
-	die "I have been updated, please restart me!"
+	einfo "A new version of $0 is available"
+	einfo "Please restart $0"
+	die
 fi
 
-# -------------------------------------------------------------
-# detect the tarball name
+edebug "Detecting settings for tarball based on ebuild name"
 
 EBUILD_BASE=$(basename ${EBUILD})
 EBUILD_NAME=${EBUILD_BASE/-[0-9]*/}
@@ -202,74 +374,171 @@ TB_VER=${EBUILD_BASE/${EBUILD_NAME}-/}
 TB_VER=${TB_VER/.ebuild/}
 DATESTAMP=$(date +%Y%m%d)
 
-einfol 2 "EBUILD_BASE : ${EBUILD_BASE}"
-einfol 2 "EBUILD_NAME : ${EBUILD_NAME}"
-einfol 2 "TB_VER      : ${TB_VER}"
-einfol 2 "DATESTAMP   : ${DATESTAMP}"
-
 case ${EBUILD_NAME} in
 	apache)
 		TREE=${TB_VER%.*}
 		TB=gentoo-apache-${TB_VER}-${DATESTAMP}.tar.bz2
 		TB_DIR=gentoo-apache-${TB_VER}
-		UPDATE_EBUILD=1
 		;;
 	gentoo-webroot-default)
 		TREE=gentoo-webroot-default
 		TB=gentoo-webroot-default-${TB_VER}.tar.bz2
 		TB_DIR=gentoo-webroot-default-${TB_VER}
+		MOD_EBUILD=0
+		UPLOAD_MIRROR=1
+		UPLOAD_DEV=0
+		einfo "Have you version-bumped gentoo-webroot-default?"
+		einfo "If not, press Ctrl-C now and do so, specifying the new ebuild"
+		sleep 5
 		;;
 	*)	
-		die "Unknown ebuild (ebuild name: ${EBUILD_NAME})";;
+		die "Don't know what to do for ebuild: ${EBUILD_NAME}";;
 esac
 
-# -------------------------------------------------------------
-# create tarball
+edebug "  TREE: ${TREE}"
+edebug "  TB: ${TB}"
+edebug "  TB_DIR: ${TB_DIR}"
 
-einfol 1 "Creating ${TB} from ${TREE}/ ..."
-cp -rl ${TREE} ${TB_DIR} || die "Copy failed"
-date -u > ${TB_DIR}/DATESTAMP
-echo "Packaged by ${G_USER}" >> ${TB_DIR}/DATESTAMP
-tar --create --bzip2 --verbose --exclude=CVS --file ${TB} ${TB_DIR} >&9 || die "Tarball creation failed"
-rm -rf ${TB_DIR} || ewarn "Couldn't clean up, manually remove ${TB_DIR}/"
-einfol 2 "... done!"
-einfol 2
-
-# -------------------------------------------------------------
-if [ "${UPLOAD}" = "1" ]; then
-	einfol 1 "Putting ${TB} on the mirrors ..."
-	scp ${TB} ${G_USER}@dev.gentoo.org:/space/distfiles-local >&9 || die "Couldn't upload tarball"
-	einfol 2 "... done!"
-	einfol 1
-	einfol 1 "Please remember it can take up to 24 hours for full propogation"
-	einfol 1 "Make sure the tarball is on the mirrors before marking a package as stable"
-	einfol 1
-fi
-
-# -------------------------------------------------------------
-if [ "${UPDATE_EBUILD}" == "1" ]; then
-	einfol 1 "Updating datestamp in ebuild ${EBUILD}"
-	sed -i -e "s/GENTOO_PATCHSTAMP=\"[0-9]*\"/GENTOO_PATCHSTAMP=\"${DATESTAMP}\"/" ${EBUILD}
-	einfol 1
-
-	einfol 0 "Please double check the change in the ebuild (should only effect the"
-	einfol 0 "setting of GENTOO_PATCHSTAMP)"
-	einfol 0
-fi
-
-# -------------------------------------------------------------
-if [ -n "${DISTLOCAL}" ]; then
-	cp -v ${TB} ${DISTDIR} >&9
-	if [ -n "${DIGEST}" ]; then
-		ebuild ${EBUILD} digest >&9 || ewarn "Sorry. creation digest failed"
+# simply returns true or false based on whether we are in pretend mod or not
+pretend() {
+	if [ "${PRETEND}" -eq 1 ]
+	then
+		true
+		return $?
+	else
+		false
+		return $?
 	fi
-else
-	einfol 0 "Copy ${TB} to \${DISTFILES}, and run"
-	einfol 0 "ebuild \${EBUILD} digest."
-	einfol 0
-	einfol 0 "Make sure to cvs up and echangelog before a repoman commit."
-fi
+}
 
-einfol 3 "Done."
+
+# we put all this in a function so that we can simply call it again when
+# the result of asking is yes.
+CURTIME=`date -u`
+build_tarball() {
+
+	pretend && einfo "Actions to be taken:"
+
+	pretend && einfo "  Create ${TB} from ${TREE}/"
+	pretend || {
+		ebegin "Creating ${TB} from ${TREE}/"
+		edebug "Copy recursive, hard-link where possible: ${TREE} -> ${TB_DIR}"
+		cp -Rl ${TREE} ${TB_DIR} >&9 || eend $? "Copy failed" || die
+		edebug "Create ${TB_DIR}/DATESTAMP with current time (${CURTIME}), packager (${G_USER}), and script version (${MYVERSION})"
+		echo ${CURTIME} > ${TB_DIR}/DATESTAMP
+		echo "Packaged by ${G_USER}" >> ${TB_DIR}/DATESTAMP
+		echo "$0 v${MYVERSION}" >> ${TB_DIR}/DATESTAMP
+		edebug "Create bzip2-ed tarball ${TB} from ${TB_DIR} excluding CVS"
+		tar --create --bzip2 --verbose --exclude=CVS --file ${TB} ${TB_DIR} >&9
+		eend $? "Tarball creation failed" || die
+		edebug "Remove temporary directory" 
+		rm -rf ${TB_DIR} || ewarn "Couldn't clean up, manually remove ${TB_DIR}/"
+	}
+
+	if [ -n "${COPYTO}" ]
+	then
+		if [ -d ${COPYTO} -a -w ${COPYTO} ]
+		then
+			pretend && einfo "  Copy ${TB} to ${COPYTO}"
+			pretend || {
+				ebegin "Copying ${TB} to ${COPYTO}"
+				cp ${TB} ${COPYTO} >&9
+				eend $?
+			}
+		else
+			ewarn "${COPYTO} is not a directory or not writable, skipping copy"
+		fi
+	else
+		edebug "Copy not enabled"
+	fi
+
+	if [ "${UPLOAD_DEV}" -eq 1 ]
+	then
+		pretend && einfo "  Upload ${TB} to"
+		pretend && einfo "      http://dev.gentoo.org/~${G_USER}/dist/apache/"
+		pretend || {
+			einfo "Uploading ${TB} to"
+			ebegin "    http://dev.gentoo.org/~${G_USER}/dist/apache/"
+			edebug "Making directories on dev.gentoo.org: ~/public_html/dist/apache"
+			ssh ${G_USER}@dev.gentoo.org 'mkdir -pm 0755 ~/public_html/dist/apache/' >&9 || eend $? "Failed to make directories" || die
+			
+			edebug "scp ${TB} ${G_USER}@dev.gentoo.org:~/public_html/dist/apache"
+			scp ${TB} ${G_USER}@dev.gentoo.org:~/public_html/dist/apache >&9 || eend $? "Failed to upload" || die
+			edebug "Setting tarball permissions to 0644"
+			ssh ${G_USER}@dev.gentoo.org "chmod 0755 ~/public_html/dist ~/public_html/dist/apache" && ssh ${G_USER}@dev.gentoo.org "chmod 0644 ~/public_html/dist/apache/${TB}"
+			eend $? "Failed to set permissions" || die
+		}
+	else
+		edebug "Upload to devspace not enabled"
+	fi
+
+	if [ "${UPLOAD_MIRROR}" -eq 1 ]
+	then
+		pretend && einfo "  Upload ${TB} to mirror://gentoo/"
+		pretend || {
+			ebegin "Uploading ${TB} to mirror://gentoo/"
+			edebug "scp ${TB} ${G_USER}@dev.gentoo.org:/space/distfiles-local"
+			scp ${TB} ${G_USER}@dev.gentoo.org:/space/distfiles-local >&9 || eend $? "Failed to upload" || die
+			edebug "Setting tarball permissions to 0644"
+			ssh ${G_USER}@dev.gentoo.org "chmod 0644 /space/distfiles-local/${TB}"
+			eend $? "Failed to set permissions" || die
+			einfo "Please remember it can take up to 24 hours for full propogation"
+			einfo "Make sure the tarball is available before marking a package stable"
+		}
+	else
+		edebug "Upload to mirrors not enabled"
+	fi
+
+	if [ "${MOD_EBUILD}" -eq 1 ]
+	then
+		if [ -r ${EBUILD} ]
+		then
+			pretend && einfo "  Update GENTOO_PATCHSTAMP and GENTOO_DEVSPACE"
+			pretend || {
+				ebegin "Updating GENTOO_PATCHSTAMP and GENTOO_DEVSPACE"
+				sed -i -e "s/GENTOO_PATCHSTAMP=\".*\"/GENTOO_PATCHSTAMP=\"${DATESTAMP}\"/" ${EBUILD} && 
+				sed -i -e "s/GENTOO_DEVSPACE=\".*\"/GENTOO_DEVSPACE=\"${G_USER}\"/" ${EBUILD}
+				eend $? "Failed to modify ebuild" || {
+					einfo "It's highly recommended that you delete the ebuild"
+					einfo "and cvs up and then modify the ebuild manually."
+					die
+				}
+			}
+		else
+			ewarn "Unable to write to ebuild - skipping modification"
+		fi
+	else
+		edebug "Modify ebuild not enabled"
+	fi
+	
+	if [ "${DIGEST}" -eq 1 ]
+	then
+		pretend && einfo "  Regenerate digests"
+		pretend || {
+			ebegin "Regenerating digests"
+			ebuild ${EBUILD} digest >&9
+			eend $?
+		}
+	else
+		edebug "Regenerate digest not enabled"
+	fi
+	
+	pretend && einfo "No actions actually taken"
+	if [ "${ASK}" -eq 1 ]
+	then
+		einfo "Would you like to perform the above actions?"
+		echo -n "Type 'Yes' or 'No'> "
+		read ask_in
+		if [ "${ask_in}" == "Yes" -o "${ask_in}" == "yes" ]
+		then
+			ASK=0
+			PRETEND=0
+			build_tarball
+		fi
+	fi
+
+}
+
+build_tarball
 
 # vim:ai:noet:ts=4:nowrap
