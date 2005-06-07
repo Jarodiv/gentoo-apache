@@ -59,7 +59,7 @@ Where options is any of:
 -p  --pretend       Only display what would be done
     --quiet         Set verbosity to 0
 -q                  Lower verbosity by 1
--u  --user=username Gentoo Username (Default: auto-detected)
+-u  --user=username Gentoo Username (Required)
     --verbosity=n   Verbosity Level (0-4)
 -v                  Increase verbosity by 1
 
@@ -333,10 +333,12 @@ fi
 
 if [ -z "${G_USER}" ]
 then
-	G_USER=$(cat CVS/Root)
-	G_USER=${G_USER/:ext:/}
-	G_USER=${G_USER%@*}
-	einfo "Detected Gentoo Developer: ${G_USER}"
+# Autodetect not available for SVN
+#	G_USER=$(cat CVS/Root)
+#	G_USER=${G_USER/:ext:/}
+#	G_USER=${G_USER%@*}
+#	einfo "Detected Gentoo Developer: ${G_USER}"
+	usage "Gentoo Developer Not specified!"
 fi
 
 edebug "Current configuration:"
@@ -355,8 +357,8 @@ edebug "  VERBOSE: ${VERBOSE}"
 my_mtime=$(stat --format=%Y $0)
 
 ebegin "Updating tree"
-cvs up >&9
-eend $? "cvs update failed!" || die
+svn up >&9
+eend $? "svn update failed!" || die
 
 new_mtime=$(stat --format=%Y $0)
 if [ "${my_mtime}" -ne "${new_mtime}" ]
@@ -428,8 +430,8 @@ build_tarball() {
 		echo ${CURTIME} > ${TB_DIR}/DATESTAMP
 		echo "Packaged by ${G_USER}" >> ${TB_DIR}/DATESTAMP
 		echo "$0 v${MYVERSION}" >> ${TB_DIR}/DATESTAMP
-		edebug "Create bzip2-ed tarball ${TB} from ${TB_DIR} excluding CVS"
-		tar --create --bzip2 --verbose --exclude=CVS --file ${TB} ${TB_DIR} >&9
+		edebug "Create bzip2-ed tarball ${TB} from ${TB_DIR} excluding .svn"
+		tar --create --bzip2 --verbose --exclude=.svn --file ${TB} ${TB_DIR} >&9
 		eend $? "Tarball creation failed" || die
 		edebug "Remove temporary directory" 
 		rm -rf ${TB_DIR} || ewarn "Couldn't clean up, manually remove ${TB_DIR}/"
