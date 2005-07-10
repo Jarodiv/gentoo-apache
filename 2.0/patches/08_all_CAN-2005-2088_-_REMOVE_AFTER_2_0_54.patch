@@ -1,0 +1,48 @@
+diff -ur httpd-2.0.54.orig/modules/proxy/proxy_http.c httpd-2.0.54/modules/proxy/proxy_http.c
+--- httpd-2.0.54.orig/modules/proxy/proxy_http.c	2005-02-04 12:21:18.000000000 -0800
++++ httpd-2.0.54/modules/proxy/proxy_http.c	2005-07-10 01:15:49.000000000 -0700
+@@ -768,8 +768,24 @@
+                 return r->status;
+ 
+             } else {
+-                /* strip connection listed hop-by-hop headers from response */
+                 const char *buf;
++
++                /* can't have both Content-Length and Transfer-Encoding */
++                if (apr_table_get(r->headers_out, "Transfer-Encoding")
++                    && apr_table_get(r->headers_out, "Content-Length")) {
++                    /* 2616 section 4.4, point 3: "if both Transfer-Encoding
++                     * and Content-Length are received, the latter MUST be
++                     * ignored"; so unset it here to prevent any confusion
++                     * later. */
++                    apr_table_unset(r->headers_out, "Content-Length");
++                    ap_log_error(APLOG_MARK, APLOG_DEBUG, 0,
++                                 r->server,
++                                 "proxy: server %s returned Transfer-Encoding and Content-Length",
++                                 p_conn->name);
++                    p_conn->close += 1;
++                }
++                
++                /* strip connection listed hop-by-hop headers from response */
+                 p_conn->close += ap_proxy_liststr(apr_table_get(r->headers_out,
+                                                                 "Connection"),
+                                                   "close");
+diff -ur httpd-2.0.54.orig/server/protocol.c httpd-2.0.54/server/protocol.c
+--- httpd-2.0.54.orig/server/protocol.c	2005-02-04 12:21:18.000000000 -0800
++++ httpd-2.0.54/server/protocol.c	2005-07-10 01:15:49.000000000 -0700
+@@ -885,6 +885,15 @@
+             apr_brigade_destroy(tmp_bb);
+             return r;
+         }
++
++        if (apr_table_get(r->headers_in, "Transfer-Encoding")
++            && apr_table_get(r->headers_in, "Content-Length")) {
++            /* 2616 section 4.4, point 3: "if both Transfer-Encoding
++             * and Content-Length are received, the latter MUST be
++             * ignored"; so unset it here to prevent any confusion
++             * later. */
++            apr_table_unset(r->headers_in, "Content-Length");
++        }
+     }
+     else {
+         if (r->header_only) {
