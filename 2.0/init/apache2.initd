@@ -78,13 +78,6 @@ stop() {
 	eend $?
 }
 
-restart() {
-	checkconfig || return 1
-	ebegin "Restarting apache2"
-	${APACHE2} ${APACHE2_OPTS} -k restart
-	eend $?
-}
-
 reload() {
 	checkconfig || return 1
 	ebegin "Reloading apache2"
