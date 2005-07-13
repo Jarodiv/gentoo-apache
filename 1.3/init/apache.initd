@@ -42,8 +42,16 @@ checkconfig() {
 	
 	[ -n "${SERVERROOT}" ] && APACHE_OPTS="${APACHE_OPTS} -d ${SERVERROOT}"
 	[ -n "${CONFIGFILE}" ] && APACHE_OPTS="${APACHE_OPTS} -f ${CONFIGFILE}"
+
+	# set sane defaults for KEEPENV and OLDENV
+	KEEPENV="${KEEPENV:-PATH}"
+	OLDENV=
+
+	for new_env in ${KEEPENV}; do
+		OLDENV="${OLDENV} ${new_env}=`printenv ${new_env}`"
+	done
 	
-	APACHE="env -i PATH=${PATH} /usr/sbin/apache ${APACHE_OPTS}"
+	APACHE="env -i ${OLDENV} /usr/sbin/apache ${APACHE_OPTS}"
 	
 	$APACHE -t 1>/dev/null 2>&1
 	ret=$?

@@ -38,7 +38,15 @@
 # Configuration file location
 # - If this does NOT start with a '/', then it is treated relative to
 # $SERVERROOT by Apache
-#CONFIGFILE=conf/httpd.conf
+#CONFIGFILE=/etc/apache/httpd.conf
 
 # Location of Pidfile. Remember to change this in httpd.conf too!
 #PIDFILE=/var/run/apache.pid
+
+# Environment variables to keep
+# All environment variables are cleared from apache
+# Use this to preserve some of them
+# NOTE!!! It's very important that this contains PATH
+# Also, it will fail if the _value_ for any of these variables contains a space
+KEEPENV="PATH"
+

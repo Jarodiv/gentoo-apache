@@ -49,8 +49,16 @@ checkconfig() {
 	[ -n "${SERVERROOT}" ] && APACHE2_OPTS="${APACHE2_OPTS} -d ${SERVERROOT}"
 	[ -n "${CONFIGFILE}" ] && APACHE2_OPTS="${APACHE2_OPTS} -f ${CONFIGFILE}"
 	[ -n "${STARTUPERRORLOG}" ] && APACHE2_OPTS="${APACHE2_OPTS} -E ${STARTUPERRORLOG}"
-	
-	APACHE2="env -i PATH=${PATH} /usr/sbin/apache2"
+
+	# set a sane default for KEEPENV and OLDENV
+	KEEPENV=${KEEPENV:-PATH}
+	OLDENV=
+
+	for env_var in ${KEEPENV}; do
+		OLDENV="${OLDENV} ${env_var}=`printenv ${env_var}`"
+	done
+
+	APACHE2="env -i ${OLDENV} /usr/sbin/apache2"
 	
 	$APACHE2 ${APACHE2_OPTS} -t 1>/dev/null 2>&1
 	ret=$?
