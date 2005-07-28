@@ -87,8 +87,12 @@ stop() {
 }
 
 reload() {
-	checkconfig || return 1
-	ebegin "Reloading apache2"
-	${APACHE2} ${APACHE2_OPTS} -k graceful
-	eend $?
+	if ! service_started "${myservice}" ; then
+		eerror "Apache is not running! Please start it before trying to reload it."
+	else
+		checkconfig || return 1
+		ebegin "Reloading apache2"
+		${APACHE2} ${APACHE2_OPTS} -k graceful
+		eend $?
+	fi
 }
