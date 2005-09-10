@@ -1,0 +1,167 @@
+
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+"http://www.w3.org/TR/REC-html40/loose.dtd">
+<!-- ViewCVS - http://viewcvs.sourceforge.net/
+by Greg Stein - mailto:gstein@lyra.org -->
+<html>
+<head>
+<title>[Apache-SVN] Diff of /httpd/httpd/trunk/modules/ssl/ssl_engine_kernel.c</title>
+<meta name="generator" content="ViewCVS 1.0-dev">
+<link rel="stylesheet" href="/viewcvs.cgi/*docroot*/styles.css" type="text/css">
+</head>
+<body>
+<div class="vc_navheader">
+<table width="100%" border="0" cellpadding="0" cellspacing="0">
+<tr>
+<td align="left"><b>
+
+<a href="/viewcvs.cgi/?rev=264800">
+
+[Apache-SVN]</a>
+/
+
+<a href="/viewcvs.cgi/httpd/?rev=264800">
+
+httpd</a>
+/
+
+<a href="/viewcvs.cgi/httpd/httpd/?rev=264800">
+
+httpd</a>
+/
+
+<a href="/viewcvs.cgi/httpd/httpd/trunk/?rev=264800">
+
+trunk</a>
+/
+
+<a href="/viewcvs.cgi/httpd/httpd/trunk/modules/?rev=264800">
+
+modules</a>
+/
+
+<a href="/viewcvs.cgi/httpd/httpd/trunk/modules/ssl/?rev=264800">
+
+ssl</a>
+/
+
+<a href="/viewcvs.cgi/httpd/httpd/trunk/modules/ssl/ssl_engine_kernel.c?rev=264800&amp;view=log">
+
+ssl_engine_kernel.c</a>
+
+
+</b></td>
+<td align="right">
+
+<form method=get action="/viewcvs.cgi/">
+
+<b>Project Root:</b>
+<select name="root" onchange="submit()">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<optgroup label="CVS Repositories"><option>Apache</option></optgroup>
+
+
+<optgroup label="Subversion Repositories"><option selected>Apache-SVN</option></optgroup>
+
+</select>
+<input type=submit value="Go">
+</form>
+
+</td>
+</tr>
+</table>
+</div>
+<h1><img align=right src="/icons/apache_pb.gif" width=259 height=32>Diff of /httpd/httpd/trunk/modules/ssl/ssl_engine_kernel.c</h1>
+
+<a href="/viewcvs.cgi/httpd/httpd/trunk/modules/ssl/"><img src="/viewcvs.cgi/*docroot*/images/back_small.png" width=16 height=16 border=0> Parent Directory</a>
+
+| <a href="/viewcvs.cgi/httpd/httpd/trunk/modules/ssl/ssl_engine_kernel.c"><img src="/viewcvs.cgi/*docroot*/images/text.png" border=0> Revision Log</a>
+
+
+
+<h3 align=center></h3>
+
+<pre class="vc_raw_diff">--- /httpd/httpd/trunk/modules/ssl/ssl_engine_kernel.c	2005/08/30 15:54:34	264799
++++ httpd/httpd/trunk/modules/ssl/ssl_engine_kernel.c	2005/08/30 15:57:38	264800
+@@ -406,8 +406,8 @@
+                 (!(verify_old & SSL_VERIFY_PEER) &&
+                   (verify     & SSL_VERIFY_PEER)) ||
+ 
+-                (!(verify_old & SSL_VERIFY_PEER_STRICT) &&
+-                  (verify     & SSL_VERIFY_PEER_STRICT)))
++                (!(verify_old & SSL_VERIFY_FAIL_IF_NO_PEER_CERT) &&
++                  (verify     & SSL_VERIFY_FAIL_IF_NO_PEER_CERT)))
+             {
+                 renegotiate = TRUE;
+                 /* optimization */
+</pre>
+
+<br><hr noshade width="100%">
+<table border=0 cellpadding=10>
+<tr>
+<td>
+<form method=get action="/viewcvs.cgi/httpd/httpd/trunk/modules/ssl/ssl_engine_kernel.c">
+<input type="hidden" name="p2" value="/httpd/httpd/trunk/modules/ssl/ssl_engine_kernel.c" /><input type="hidden" name="p1" value="httpd/httpd/trunk/modules/ssl/ssl_engine_kernel.c" /><input type="hidden" name="r1" value="264800" /><input type="hidden" name="r2" value="264799" /><input type="hidden" name="rev" value="264800" /><input type="hidden" name="view" value="diff" />
+<input type=checkbox name="makepatch" value="1">
+Generate output suitable for use with a patch program<br>
+<select name="diff_format" onchange="submit()">
+<option value="h" >Colored Diff</option>
+<option value="l" >Long Colored Diff</option>
+<option value="u" selected>Unidiff</option>
+<option value="c" >Context Diff</option>
+<option value="s" >Side by Side</option>
+</select>
+<input type=submit value="Show">
+</form>
+</td>
+<td>
+
+&nbsp;
+
+</td>
+</tr>
+</table>
+
+<hr noshade>
+<table width="100%" border="0" cellpadding="0" cellspacing="0">
+<tr>
+<td align="left">
+<address>
+<a href="/">
+<img src="http://www.apache.org/images/apache_home.gif" alt="Apache Home"></a>
+<a href="mailto:apache@apache.org">
+<img src="http://www.apache.org/images/apache_email.gif" alt="Apache Email"></a></address><br />
+Powered by <a href="http://viewcvs.sourceforge.net/">ViewCVS 1.0-dev</a>
+</td>
+<td align="right">
+<h3><a target="_blank" href="/viewcvs.cgi/*docroot*/help_rootview.html">ViewCVS and CVS Help</a></h3>
+</td>
+</tr>
+</table>
+</body>
+</html>
+
