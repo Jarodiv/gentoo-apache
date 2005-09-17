@@ -1,5 +1,6 @@
---- apache_1.3.33/src/modules/standard/mod_dir.c	2004-02-20 12:37:40.000000000 -0800
-+++ apache_1.3.33.new/src/modules/standard/mod_dir.c	2005-02-20 12:40:43.553575634 -0800
+diff -ur apache_1.3.33.orig/src/modules/standard/mod_dir.c apache_1.3.33/src/modules/standard/mod_dir.c
+--- apache_1.3.33.orig/src/modules/standard/mod_dir.c	2004-02-20 12:37:40.000000000 -0800
++++ apache_1.3.33/src/modules/standard/mod_dir.c	2005-09-17 16:34:20.000000000 -0700
 @@ -30,6 +30,7 @@
  
  typedef struct dir_config_struct {
@@ -92,7 +93,7 @@
      return new;
  }
  
-@@ -77,7 +136,6 @@
+@@ -77,11 +136,11 @@
      dir_config_rec *d =
      (dir_config_rec *) ap_get_module_config(r->per_dir_config,
                                           &dir_module);
@@ -100,7 +101,13 @@
      char **names_ptr;
      int num_names;
      int error_notfound = 0;
-@@ -105,16 +163,25 @@
+-
++	array_header *index_names;
++ 
+     if (r->uri[0] == '\0' || r->uri[strlen(r->uri) - 1] != '/') {
+         char *ifile;
+         if (r->args != NULL)
+@@ -105,16 +164,23 @@
          r->filename = ap_pstrcat(r->pool, r->filename, "/", NULL);
      }
  
@@ -115,8 +122,6 @@
 -    }
 -
 +	/* Merge index_names and index_names_incr */
-+	array_header *index_names;
-+ 
 +	if (d->index_names) {
 +		if (d->index_names_incr) {
 +			index_names = ap_append_arrays(r->pool, d->index_names, d->index_names_incr);

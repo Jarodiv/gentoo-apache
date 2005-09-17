@@ -1,6 +1,7 @@
---- ../httpd-2.0.52/modules/mappers/mod_dir.c	2004-08-15 14:59:57.000000000 -0700
-+++ httpd-2.0.52/modules/mappers/mod_dir.c	2005-02-13 02:27:55.724946750 -0800
-@@ -38,6 +38,7 @@
+diff -ur httpd-2.0.54.orig/modules/mappers/mod_dir.c httpd-2.0.54/modules/mappers/mod_dir.c
+--- httpd-2.0.54.orig/modules/mappers/mod_dir.c	2005-02-04 12:21:18.000000000 -0800
++++ httpd-2.0.54/modules/mappers/mod_dir.c	2005-09-17 16:29:52.000000000 -0700
+@@ -39,6 +39,7 @@
  
  typedef struct dir_config_struct {
      apr_array_header_t *index_names;
@@ -8,7 +9,7 @@
      slash_cfg do_slash;
  } dir_config_rec;
  
-@@ -54,6 +55,57 @@
+@@ -55,6 +56,57 @@
      return NULL;
  }
  
@@ -66,7 +67,7 @@
  static const char *configure_slash(cmd_parms *cmd, void *d_, int arg)
  {
      dir_config_rec *d = d_;
-@@ -66,6 +118,10 @@
+@@ -67,6 +119,10 @@
  {
      AP_INIT_ITERATE("DirectoryIndex", add_index, NULL, DIR_CMD_PERMS,
                      "a list of file names"),
@@ -77,7 +78,7 @@
      AP_INIT_FLAG("DirectorySlash", configure_slash, NULL, DIR_CMD_PERMS,
                   "On or Off"),
      {NULL}
-@@ -76,6 +132,7 @@
+@@ -77,6 +133,7 @@
      dir_config_rec *new = apr_pcalloc(p, sizeof(dir_config_rec));
  
      new->index_names = NULL;
@@ -85,7 +86,7 @@
      new->do_slash = SLASH_UNSET;
      return (void *) new;
  }
-@@ -89,13 +146,13 @@
+@@ -90,16 +147,17 @@
      new->index_names = add->index_names ? add->index_names : base->index_names;
      new->do_slash =
          (add->do_slash == SLASH_UNSET) ? base->do_slash : add->do_slash;
@@ -100,7 +101,11 @@
      char **names_ptr;
      int num_names;
      int error_notfound = 0;
-@@ -154,16 +211,25 @@
++	apr_array_header_t *index_names;
+ 
+     /* only handle requests against directories */
+     if (r->finfo.filetype != APR_DIR) {
+@@ -155,16 +213,23 @@
          return DECLINED;
      }
  
@@ -113,9 +118,8 @@
 -        names_ptr = dummy_ptr;
 -        num_names = 1;
 -    }
+-
 +	/* Merge index_names and index_names_incr */
-+	apr_array_header_t *index_names;
- 
 +	if (d->index_names) {
 +		if (d->index_names_incr) {
 +			index_names = apr_array_append(r->pool, d->index_names, d->index_names_incr);
