@@ -59,6 +59,7 @@ Where options is any of:
 -p  --pretend       Only display what would be done
     --quiet         Set verbosity to 0
 -q                  Lower verbosity by 1
+-s  --datestamp     Use alternate datestamp
 -u  --user=username Gentoo Username (Required)
     --verbosity=n   Verbosity Level (0-4)
 -v                  Increase verbosity by 1
@@ -227,6 +228,7 @@ do
 				no-color)		nocolor;;
 				copyto)			COPYTO=${VALUE};;
 				no-copy)		COPYTO=;;
+				datestamp)		DATESTAMP=${VALUE};;
 				devspace)		UPLOAD_DEV=1;;
 				no-devspace)	UPLOAD_DEV=0;;
 				digest)			DIGEST=1;;
@@ -270,6 +272,7 @@ do
 					M)	UPLOAD_MIRROR=0;;
 					p)	PRETEND=1;;
 					q)	VERBOSE=$((${VERBOSE} - 1));;
+					s)	DATESTAMP=$1; shift;;
 					t)	color;;
 					T)	nocolor;;
 					u)	G_USER=$1; shift;;
@@ -374,7 +377,7 @@ EBUILD_BASE=$(basename ${EBUILD})
 EBUILD_NAME=${EBUILD_BASE/-[0-9]*/}
 TB_VER=${EBUILD_BASE/${EBUILD_NAME}-/}
 TB_VER=${TB_VER/.ebuild/}
-DATESTAMP=$(date +%Y%m%d)
+DATESTAMP=${DATESTAMP:-$(date +%Y%m%d)}
 
 case ${EBUILD_NAME} in
 	apache)
