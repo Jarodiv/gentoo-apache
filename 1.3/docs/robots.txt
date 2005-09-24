@@ -1,4 +1,3 @@
-# $Header$
 # exclude help system from robots
 User-agent: *
 Disallow: /manual/ 

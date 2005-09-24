@@ -1,5 +1,4 @@
 #!/bin/sh
-## $Header$
 ##
 ##  gentestcrt -- Create self-signed test certificate
 ##  (C) 2001 Jean-Michel Dault <jmdault@mandrakesoft.com> and Mandrakesoft

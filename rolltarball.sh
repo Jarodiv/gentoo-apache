@@ -4,7 +4,6 @@
 #
 # Copyright 2005 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header$
 #
 # Before commiting large changes, or if you don't completely understand a 
 # small change you are about to commit, please consult the Primary Maintainer

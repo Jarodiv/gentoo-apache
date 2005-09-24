@@ -1,5 +1,3 @@
-# $Header$
-#
 # This file will be installed into /etc/apache2 when you first emerge
 # Apache2.  If/when you upgrade, it will be consulted for your options,
 # thus preserving your previous configuration.  The default configuration
