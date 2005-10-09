@@ -30,7 +30,7 @@ diff -Nup -Nrup httpd-2.0.52.orig/server/core.c httpd-2.0.52.patched/server/core
      }
      else {
 -        ap_add_version_component(pconf, AP_SERVER_BASEVERSION " (" PLATFORM ")");
-+        ap_add_version_component(pconf, AP_SERVER_BASEVERSION " (Gentoo/Linux)");
++        ap_add_version_component(pconf, AP_SERVER_BASEVERSION " (Gentoo)");
      }
  
      /*
