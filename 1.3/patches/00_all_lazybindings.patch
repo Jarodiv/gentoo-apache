@@ -1,0 +1,11 @@
+diff -ur apache_1.3.33.orig/Makefile.tmpl apache_1.3.33/Makefile.tmpl
+--- apache_1.3.33.orig/Makefile.tmpl	2004-02-20 14:40:50.000000000 -0800
++++ apache_1.3.33/Makefile.tmpl	2005-10-23 16:06:01.000000000 -0700
+@@ -163,6 +163,7 @@
+ 			-DLOG_EXEC=\"$(suexec_logexec)\" \
+ 			-DDOC_ROOT=\"$(suexec_docroot)\" \
+ 			-DSAFE_PATH=\"$(suexec_safepath)\"' \
++			$(LINK) -Wl,-z,now \
+ 		suexec; \
+ 	fi
+ 	@echo "<=== $(SRC)/support"
