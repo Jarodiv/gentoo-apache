@@ -4,9 +4,6 @@
 
 opts="${opts} reload configtest"
 
-# cannot use $1 in local scope in selectconfig
-FILENAME=`basename $1`
-
 # this next comment is important, don't remove it - it has to be somewhere in 
 # the init script to kill off a warning that doesn't apply to us
 # svc_start svc_stop   
