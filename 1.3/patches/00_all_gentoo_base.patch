@@ -1,73 +1,3 @@
-diff -Naur apache_1.3.31/conf/mime.types apache_1.3.31-gentoo/conf/mime.types
---- apache_1.3.31/conf/mime.types	2004-01-10 22:57:46.000000000 +0000
-+++ apache_1.3.31-gentoo/conf/mime.types	2004-05-08 09:49:06.481166704 +0000
-@@ -344,19 +344,18 @@
- application/x-bcpio		bcpio
- application/x-cdlink		vcd
- application/x-chess-pgn		pgn
--application/x-compress
- application/x-cpio		cpio
- application/x-csh		csh
- application/x-director		dcr dir dxr
- application/x-dvi		dvi
- application/x-futuresplash	spl
- application/x-gtar		gtar
--application/x-gzip
- application/x-hdf		hdf
- application/x-javascript	js
- application/x-koan		skp skd skt skm
- application/x-latex		latex
- application/x-netcdf		nc cdf
-+application/x-ogg		ogg
- application/x-sh		sh
- application/x-shar		shar
- application/x-shockwave-flash	swf
-diff -Naur apache_1.3.31/config.layout apache_1.3.31-gentoo/config.layout
---- apache_1.3.31/config.layout	2002-05-16 16:32:31.000000000 +0000
-+++ apache_1.3.31-gentoo/config.layout	2004-05-08 09:49:06.487165792 +0000
-@@ -28,6 +28,7 @@
-     runtimedir:    $localstatedir/logs
-     logfiledir:    $localstatedir/logs
-     proxycachedir: $localstatedir/proxy
-+    serverroot:    $prefix
- </Layout>
- 
- #   GNU standards conforming path layout.
-@@ -50,6 +51,7 @@
-     runtimedir:    $localstatedir/run
-     logfiledir:    $localstatedir/log
-     proxycachedir: $localstatedir/proxy
-+    serverroot:    $prefix
- </Layout>
- 
- #   Apache binary distribution path layout
-@@ -92,6 +94,7 @@
-     runtimedir:    $prefix/Logs
-     logfiledir:    $prefix/Logs
-     proxycachedir: $prefix/ProxyCache
-+    serverroot:    $prefix
- </Layout>
- 
- #   Darwin/Mac OS Layout
-@@ -115,8 +118,8 @@
-     proxycachedir: $runtimedir/proxy
- </Layout>
- 
--#   Red Hat Linux 7.x layout
--<Layout RedHat>
-+#   ADVX layout
-+<Layout ADVX>
-     prefix:        /usr
-     exec_prefix:   $prefix
-     bindir:        $prefix/bin
-@@ -134,6 +137,7 @@
-     runtimedir:    $localstatedir/run
-     logfiledir:    $localstatedir/log/httpd
-     proxycachedir: $localstatedir/cache/httpd
-+    serverroot:    /etc/httpd
- </Layout>     
- 
- #   According to the /opt filesystem conventions
 diff -Naur apache_1.3.31/configure apache_1.3.31-gentoo/configure
 --- apache_1.3.31/configure	2004-02-20 22:40:50.000000000 +0000
 +++ apache_1.3.31-gentoo/configure	2004-05-08 09:49:06.617146032 +0000
@@ -136,28 +66,6 @@ diff -Naur apache_1.3.31/configure apache_1.3.31-gentoo/configure
  echo "echo '-DSUEXEC_BIN=\"$sbindir/suexec\"'" >>$src/apaci
  echo "echo '-DSHARED_CORE_DIR=\"$libexecdir\"'" >>$src/apaci
  echo "echo '-DDEFAULT_PIDLOG=\"${runtimedir_relative}${thetarget}.pid\"'" >>$src/apaci
-diff -Naur apache_1.3.31/src/helpers/find-dbm-lib apache_1.3.31-gentoo/src/helpers/find-dbm-lib
---- apache_1.3.31/src/helpers/find-dbm-lib	2004-02-16 22:23:09.000000000 +0000
-+++ apache_1.3.31-gentoo/src/helpers/find-dbm-lib	2004-05-08 09:49:06.621145424 +0000
-@@ -28,17 +28,7 @@
- 	    *-linux*)
- 		# many systems don't have -ldbm
- 		DBM_LIB=""
--		if ./helpers/TestCompile lib ndbm dbm_open; then
--		    DBM_LIB="-lndbm"
--		    if ./helpers/TestCompile lib db1 dbm_open; then
--			# Red Hat needs this; ndbm.h lives in db1
--			CFLAGS="$CFLAGS -I/usr/include/db1"
--		    fi
--		elif ./helpers/TestCompile lib db1 dbm_open; then
--		    # For Red Hat 7, if not handled by the ndbm case above
--		    DBM_LIB="-ldb1"
--		    CFLAGS="$CFLAGS -I/usr/include/db1"
--                elif ./helpers/TestCompile lib gdbm dbm_open; then
-+                if ./helpers/TestCompile lib gdbm dbm_open; then
-                     DBM_LIB="-lgdbm"
-                     CFLAGS="$CFLAGS -I/usr/include/gdbm"
- 		elif ./helpers/TestCompile lib dbm dbm_open; then
 diff -Naur apache_1.3.31/src/include/hsregex.h apache_1.3.31-gentoo/src/include/hsregex.h
 --- apache_1.3.31/src/include/hsregex.h	2004-04-15 15:51:51.000000000 +0000
 +++ apache_1.3.31-gentoo/src/include/hsregex.h	2004-05-08 09:49:06.626144664 +0000
@@ -202,23 +110,10 @@ diff -Naur apache_1.3.31/src/main/http_main.c apache_1.3.31-gentoo/src/main/http
      }
      else {
  	ap_add_version_component(SERVER_BASEVERSION " (" PLATFORM ")");
-+	ap_add_version_component(" (Gentoo/Linux)");
++	ap_add_version_component(" (Gentoo)");
      }
      /*
       * Lock the server_version string if we're not displaying
-diff -Naur apache_1.3.31/src/modules/standard/mod_auth_dbm.c apache_1.3.31-gentoo/src/modules/standard/mod_auth_dbm.c
---- apache_1.3.31/src/modules/standard/mod_auth_dbm.c	2004-02-20 20:37:40.000000000 +0000
-+++ apache_1.3.31-gentoo/src/modules/standard/mod_auth_dbm.c	2004-05-08 09:49:07.027083712 +0000
-@@ -38,7 +38,8 @@
- #define dbm_fetch sdbm_fetch
- #define dbm_close sdbm_close
- #else
--#include <ndbm.h>
-+#define DB_DBM_HSEARCH 1
-+#include <db.h>
- #endif
- 
- /*
 diff -Naur apache_1.3.31/src/support/apxs.pl apache_1.3.31-gentoo/src/support/apxs.pl
 --- apache_1.3.31/src/support/apxs.pl	2004-02-20 22:02:24.000000000 +0000
 +++ apache_1.3.31-gentoo/src/support/apxs.pl	2004-05-08 09:49:07.123069120 +0000
