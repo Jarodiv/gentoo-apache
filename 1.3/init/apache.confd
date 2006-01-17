@@ -1,7 +1,4 @@
-# Copyright 1999-2004 Gentoo Foundation
-# Distributed under the terms of the GNU General Public License v2
-
-# Config file for /etc/init.d/apache
+# /etc/conf.d/apache2: config file for /etc/init.d/apache2
 
 # Here's an example using mod_ssl:
 #
