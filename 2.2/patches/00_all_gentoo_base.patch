@@ -1,31 +1,20 @@
-diff -Nup -Nrup httpd-2.0.52.orig/include/httpd.h httpd-2.0.52.patched/include/httpd.h
---- httpd-2.0.52.orig/include/httpd.h	2004-08-12 06:22:52.000000000 +0100
-+++ httpd-2.0.52.patched/include/httpd.h	2005-02-18 02:34:22.000000000 +0000
-@@ -137,7 +137,7 @@ extern "C" {
+Customizations for Gentoo
+diff -ur httpd-2.2.0/include/httpd.h httpd-2.2.0.patched/include/httpd.h
+--- httpd-2.2.0/include/httpd.h	2005-09-29 13:44:53.000000000 -0700
++++ httpd-2.2.0.patched/include/httpd.h	2006-02-04 13:03:05.000000000 -0800
+@@ -155,7 +155,7 @@
  
- /* The path to the suExec wrapper, can be overridden in Configuration */
+ /** The path to the suExec wrapper, can be overridden in Configuration */
  #ifndef SUEXEC_BIN
 -#define SUEXEC_BIN  HTTPD_ROOT "/bin/suexec"
 +#define SUEXEC_BIN  "/usr/sbin/suexec2"
  #endif
  
- /* The timeout for waiting for messages */
-diff -Nup -Nrup httpd-2.0.52.orig/modules/ssl/ssl_engine_mutex.c httpd-2.0.52.patched/modules/ssl/ssl_engine_mutex.c
---- httpd-2.0.52.orig/modules/ssl/ssl_engine_mutex.c	2004-02-09 20:53:20.000000000 +0000
-+++ httpd-2.0.52.patched/modules/ssl/ssl_engine_mutex.c	2005-02-18 02:34:22.000000000 +0000
-@@ -41,6 +41,8 @@ int ssl_mutex_init(server_rec *s, apr_po
-     if (mc->nMutexMode == SSL_MUTEXMODE_NONE) 
-         return TRUE;
- 
-+    apr_file_remove(mc->szMutexFile, p);
-+
-     if ((rv = apr_global_mutex_create(&mc->pMutex, mc->szMutexFile,
-                                 mc->nMutexMech, p)) != APR_SUCCESS) {
-         if (mc->szMutexFile)
-diff -Nup -Nrup httpd-2.0.52.orig/server/core.c httpd-2.0.52.patched/server/core.c
---- httpd-2.0.52.orig/server/core.c	2004-09-21 14:21:16.000000000 +0100
-+++ httpd-2.0.52.patched/server/core.c	2005-02-18 02:34:22.000000000 +0000
-@@ -2489,7 +2489,7 @@ static void ap_set_version(apr_pool_t *p
+ /** The timeout for waiting for messages */
+diff -ur httpd-2.2.0/server/core.c httpd-2.2.0.patched/server/core.c
+--- httpd-2.2.0/server/core.c	2005-11-15 11:39:15.000000000 -0800
++++ httpd-2.2.0.patched/server/core.c	2006-02-04 13:07:40.000000000 -0800
+@@ -2756,7 +2756,7 @@
          ap_add_version_component(pconf, AP_SERVER_BASEPRODUCT "/" AP_SERVER_MAJORVERSION);
      }
      else {
@@ -34,78 +23,23 @@ diff -Nup -Nrup httpd-2.0.52.orig/server/core.c httpd-2.0.52.patched/server/core
      }
  
      /*
-diff -Nup -Nrup httpd-2.0.52.orig/server/Makefile.in httpd-2.0.52.patched/server/Makefile.in
---- httpd-2.0.52.orig/server/Makefile.in	2004-03-08 17:40:37.000000000 +0000
-+++ httpd-2.0.52.patched/server/Makefile.in	2005-02-18 02:34:22.000000000 +0000
-@@ -67,6 +67,9 @@ exports.c: export_files
- export_vars.h: export_files
- 	$(AWK) -f $(top_srcdir)/build/make_var_export.awk `cat $?` > $@
+diff -ru httpd-2.2.0/support/apxs.in httpd-2.2.0.patched/support/apxs.in
+--- httpd-2.2.0/support/apxs.in	2005-06-10 02:18:14.000000000 -0700
++++ httpd-2.2.0.patched/support/apxs.in	2006-02-14 21:17:47.000000000 -0800
+@@ -190,9 +190,6 @@
+ my $httpd = get_vars("sbindir") . "/" . get_vars("progname");
+ $httpd = eval qq("$httpd");
+ $httpd = eval qq("$httpd");
+-my $envvars = get_vars("sbindir") . "/envvars";
+-$envvars = eval qq("$envvars");
+-$envvars = eval qq("$envvars");
  
-+# Needed to allow exports.c to be generated in a parallel build successfully
-+.NOTPARALLEL: $(top_builddir)/server/exports.c
-+
- # Rule to make def file for OS/2 core dll
- ApacheCoreOS2.def: exports.c export_vars.h $(top_srcdir)/os/$(OS_DIR)/core_header.def
- 	cat $(top_srcdir)/os/$(OS_DIR)/core_header.def > $@
-diff -Nup -Nrup httpd-2.0.52.orig/support/apachectl.in httpd-2.0.52.patched/support/apachectl.in
---- httpd-2.0.52.orig/support/apachectl.in	2004-08-23 16:07:18.000000000 +0100
-+++ httpd-2.0.52.patched/support/apachectl.in	2005-02-18 02:43:59.000000000 +0000
-@@ -40,17 +40,25 @@ ARGV="$@"
- # --------------------                              --------------------
- # 
- # the path to your httpd binary, including options if necessary
--HTTPD='@exp_sbindir@/@progname@'
-+. /etc/conf.d/apache2
-+if [ -n ${MPM} ] && [ -x @exp_sbindir@/@progname@.${MPM} ]; then
-+    HTTPD="@exp_sbindir@/@progname@.${MPM} ${APACHE2_OPTS}"
-+else
-+    HTTPD="@exp_sbindir@/@progname@ ${APACHE2_OPTS}"
-+fi
- #
- # pick up any necessary environment variables
--if test -f @exp_sbindir@/envvars; then
--  . @exp_sbindir@/envvars
-+if test -f @exp_installbuilddir@/envvars; then
-+  . @exp_installbuilddir@/envvars
- fi
- #
- # a command that outputs a formatted text version of the HTML at the
- # url given on the command line.  Designed for lynx, however other
- # programs may work.  
- LYNX="lynx -dump"
-+if ! type -p lynx 2>&1 >/dev/null; then
-+	LYNX=no
-+fi
- #
- # the URL to your server's mod_status status page.  If you do not
- # have one, then status and fullstatus will not work.
-@@ -74,6 +82,14 @@ if [ "x$ARGV" = "x" ] ; then 
-     ARGV="-h"
- fi
- 
-+if [ "${LYNX}" = "no" ] && [ "${ARGV}" = "status" -o "${ARGV}" = "fullstatus" ]; then
-+	echo >&2 "lynx not found!"
-+	echo >&2 ""
-+	echo >&2 "You need to emerge 'www-client/lynx' for status monitoring via the"
-+	echo >&2 "'status' and 'fullstatus' commands to work."
-+	exit 1
-+fi
-+
- case $ARGV in
- start|stop|restart|graceful)
-     $HTTPD -k $ARGV
-diff -Nup -Nrup httpd-2.0.52.orig/support/apxs.in httpd-2.0.52.patched/support/apxs.in
---- httpd-2.0.52.orig/support/apxs.in	2004-02-09 20:59:49.000000000 +0000
-+++ httpd-2.0.52.patched/support/apxs.in	2005-02-18 02:34:22.000000000 +0000
-@@ -198,19 +198,6 @@ if ($0 =~ m:support/apxs$:) {
-     ($httpd = $0) =~ s:support/apxs$::;
+ #allow apxs to be run from the source tree, before installation
+ if ($0 =~ m:support/apxs$:) {
+@@ -204,14 +201,6 @@
+ 	exit 1;
  }
  
--unless (-x "$httpd") {
--	error("$httpd not found or not executable");
--	exit 1;
--}
--
 -unless (grep /mod_so/, `. $envvars && $httpd -l`) {
 -    error("Sorry, no shared object support for Apache");
 -    error("available under your platform. Make sure");

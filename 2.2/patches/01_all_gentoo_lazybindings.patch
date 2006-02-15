@@ -1,19 +1,21 @@
-diff -urN httpd-2.0.55.orig/support/Makefile.in httpd-2.0.55/support/Makefile.in
---- httpd-2.0.55.orig/support/Makefile.in	2004-11-24 14:31:09.000000000 -0500
-+++ httpd-2.0.55/support/Makefile.in	2005-10-23 12:08:40.000000000 -0400
-@@ -8,6 +8,8 @@
+Fix lazybindings for suexec
+diff -ur httpd-2.2.0/support/Makefile.in httpd-2.2.0.patched/support/Makefile.in
+--- httpd-2.2.0/support/Makefile.in	2005-07-06 16:15:34.000000000 -0700
++++ httpd-2.2.0.patched/support/Makefile.in	2006-02-04 13:31:47.000000000 -0800
+@@ -8,6 +8,7 @@
  
  PROGRAM_LDADD        = $(UTIL_LDFLAGS) $(PROGRAM_DEPENDENCIES) $(EXTRA_LIBS) $(AP_LIBS)
  PROGRAM_DEPENDENCIES = 
 +LAZYLDFLAGS          = -Wl,-z,now
-+
  
  include $(top_builddir)/build/rules.mk
  
-@@ -59,5 +61,5 @@
+@@ -60,7 +61,7 @@
  
  suexec_OBJECTS = suexec.lo
  suexec: $(suexec_OBJECTS)
 -	$(LINK) $(suexec_OBJECTS)
 +	$(LINK) $(LAZYLDFLAGS) $(suexec_OBJECTS)
  
+ htcacheclean_OBJECTS = htcacheclean.lo
+ htcacheclean: $(htcacheclean_OBJECTS)

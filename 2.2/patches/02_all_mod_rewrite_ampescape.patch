@@ -1,16 +1,9 @@
-diff -ru httpd-2.0.52/modules/mappers/mod_rewrite.c httpd-2.0.52.ampescape/modules/mappers/mod_rewrite.c
---- httpd-2.0.52/modules/mappers/mod_rewrite.c	2004-08-27 21:23:26.000000000 +0200
-+++ httpd-2.0.52.ampescape/modules/mappers/mod_rewrite.c	2004-11-19 19:04:17.190398544 +0100
-@@ -964,6 +964,7 @@
-         map_pfn_register("tolower", rewrite_mapfunc_tolower);
-         map_pfn_register("toupper", rewrite_mapfunc_toupper);
-         map_pfn_register("escape", rewrite_mapfunc_escape);
-+		map_pfn_register("ampescape", rewrite_mapfunc_ampescape);
-         map_pfn_register("unescape", rewrite_mapfunc_unescape);
-     }
-     return OK;
-@@ -3346,6 +3347,29 @@
-     return value;
+Provide escaping for the ampersand in mod_rewrite
+diff -ur httpd-2.2.0/modules/mappers/mod_rewrite.c httpd-2.2.0.patched/modules/mappers/mod_rewrite.c
+--- httpd-2.2.0/modules/mappers/mod_rewrite.c	2005-11-10 07:20:05.000000000 -0800
++++ httpd-2.2.0.patched/modules/mappers/mod_rewrite.c	2006-02-04 13:52:34.000000000 -0800
+@@ -1075,6 +1075,30 @@
+     return ap_escape_uri(r->pool, key);
  }
  
 +static char *rewrite_mapfunc_ampescape(request_rec *r, char *key) {
@@ -36,17 +29,15 @@ diff -ru httpd-2.0.52/modules/mappers/mod_rewrite.c httpd-2.0.52.ampescape/modul
 +	return copy;
 +}
 +
++
  static char *rewrite_mapfunc_unescape(request_rec *r, char *key)
  {
-     char *value;
-diff -ru httpd-2.0.52/modules/mappers/mod_rewrite.h httpd-2.0.52.ampescape/modules/mappers/mod_rewrite.h
---- httpd-2.0.52/modules/mappers/mod_rewrite.h	2004-08-20 23:17:41.000000000 +0200
-+++ httpd-2.0.52.ampescape/modules/mappers/mod_rewrite.h	2004-11-19 18:29:50.000000000 +0100
-@@ -389,6 +389,7 @@
- static char *rewrite_mapfunc_toupper(request_rec *r, char *key);
- static char *rewrite_mapfunc_tolower(request_rec *r, char *key);
- static char *rewrite_mapfunc_escape(request_rec *r, char *key);
-+static char *rewrite_mapfunc_ampescape(request_rec *r, char *key);
- static char *rewrite_mapfunc_unescape(request_rec *r, char *key);
- 
- static char *select_random_value_part(request_rec *r, char *value);
+     ap_unescape_url(key);
+@@ -4011,6 +4035,7 @@
+         map_pfn_register("tolower", rewrite_mapfunc_tolower);
+         map_pfn_register("toupper", rewrite_mapfunc_toupper);
+         map_pfn_register("escape", rewrite_mapfunc_escape);
++		map_pfn_register("ampescape", rewrite_mapfunc_ampescape);
+         map_pfn_register("unescape", rewrite_mapfunc_unescape);
+     }
+     return OK;

@@ -4,10 +4,6 @@
 
 opts="${opts} reload configtest"
 
-# this next comment is important, don't remove it - it has to be somewhere in 
-# the init script to kill off a warning that doesn't apply to us
-# svc_start svc_stop   
-
 depend() {
 	need net
 	use mysql dns logger netmount postgresql
@@ -32,13 +28,6 @@ checkconfig() {
 	[ ${CONFIGFILE:0:1} != "/" ] && CONFIGFILE="${SERVERROOT}/${CONFIGFILE}"
 	if [ ! -r "${CONFIGFILE}" ]; then
 		eerror "Unable to read configuration file: ${CONFIGFILE}"
-		return 1
-	fi
-	
-	# check to see if the old config files exist and aren't used
-	if [[ "${CONFIGFILE}" != "/etc/apache2/conf/apache2.conf" && 
-			-e "/etc/apache2/conf/apache2.conf" ]]; then
-		eerror "Found old apache2.conf in /etc/apache2/conf. Configuration locations \n have moved, please check ${CONFIGFILE} to make sure it is correct, \n and remove /etc/apache2/conf/apache2.conf.\n\n Please see http://www.gentoo.org/doc/en/apache-upgrading.xml\n for more information."
 		return 1
 	fi
 	
@@ -70,7 +59,6 @@ start() {
 	checkconfig || return 1
 	ebegin "Starting apache2"
 	[ -f /var/log/apache2/ssl_scache ] && rm /var/log/apache2/ssl_scache
-	[ -f /usr/lib/apache2/build/envvars ] && . /usr/lib/apache2/build/envvars
 	${APACHE2} ${APACHE2_OPTS} -k start
 	eend $?
 }
@@ -92,3 +80,6 @@ reload() {
 		eend $?
 	fi
 }
+
+# TODO: Add other apache2ctl options
+# graceful, graceful-stop, startssl, sslstart, start-SSL, status, fullstatus

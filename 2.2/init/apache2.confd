@@ -5,19 +5,23 @@
 # install a configuration in /etc/apache2/modules.d. In that file will be an
 # <IfDefine NNN> where NNN is the option to enable that module.
 # Here are the options available in the default configuration:
-#   USERDIR   Enables /~username mapping to /home/username/public_html
-#   INFO      Enables mod_info, a useful module for debugging
-#   PROXY     Enables mod_proxy
-#   DAV       Enables mod_dav
-#   DAV_FS    Enables mod_dav_fs (you should enable this when you enable DAV
-#             unless you know what you are doing)
-#   SSL       Enables SSL
-#   SSL_DEFAULT_VHOST  Enables default vhost for SSL (you should enable this
+#  DAV        Enables mod_dav
+#  DEFAULT_VHOST   Enables name-based virtual hosts, with the default
+#                  virtual host being in /var/www/localhost/htdocs
+#  ERRORDOCS  Enables default error documents for many languages.
+#  INFO       Enables mod_info, a useful module for debugging [DEFUALT]
+#  LANGUAGE   Enables content-negotiation based on language and charset.
+#  LDAP       Enables mod_ldap (available if USE=ldap)
+#  AUTH_LDAP  Enables authentication through mod_ldap (available if USE=ldap)
+#  MANUAL     Enables /manual/ to be the apache manual (available if USE=docs)
+#  PROXY      Enables mod_proxy
+#  SSL        Enables SSL (available if USE=ssl)
+#  SSL_DEFAULT_VHOST   Enables default vhost for SSL (you should enable this
 #                      when you enable SSL unless you know what you are doing)
-#   LDAP      Enables mod_ldap
-#   AUTH_LDAP Enables authentication through mod_ldap
-#   DEFAULT_VHOST Enables the default virtual host in /var/www/localhost/htdocs
-APACHE2_OPTS="-D DEFAULT_VHOST"
+#  SUEXEC     Enables running CGI scripts through suexec.
+#  USERDIR    Enables /~username mapping to /home/username/public_html
+
+APACHE2_OPTS="-D DEFAULT_VHOST -D LANGUAGE -D INFO"
 
 # Extended options for advanced uses of Apache ONLY
 # You don't need to edit these unless you are doing crazy Apache stuff
@@ -36,6 +40,14 @@ APACHE2_OPTS="-D DEFAULT_VHOST"
 # Location to log startup errors to
 # They are normally dumped to your terminal.
 #STARTUPERRORLOG="/var/log/apache2/startuperror.log"
+
+# A command that outputs a formatted text version of the HTML at the URL
+# of the command line. Designed for lynx, however other programs may work.
+LYNX="lynx -dump"
+
+# The URL to your server's mod_status status page.
+# Required for status and fullstatus
+STATUSURL="http://localhost/server-status"
 
 # Environment variables to keep
 # All environment variables are cleared from apache

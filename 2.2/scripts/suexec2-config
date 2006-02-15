@@ -1,0 +1,57 @@
+#!/bin/bash
+
+# This script doesn't do much, yet.
+# There is a much more functional prototype sitting on my harddrive 
+# that needs a lot of work before I can really release it to the public.
+# Michael Stewart <vericgar@gentoo.org) Feb 05 2006
+
+# Sane defaults, just in case
+caller=apache
+userdir=public_html
+docroot=/var/www
+uidmin=1000
+gidmin=100
+logfile=/var/log/apache2/suexec_log
+safepath="/usr/local/bin:/usr/bin:/bin"
+sumask=077
+
+if [ "$1" == "--config" ]; then
+	if [ -n "$2" ] && [ -f "$2" ]; then
+		. $2
+	else
+		if [ -f /etc/apache2/suexec-conf ]; then
+			. /etc/apache2/suexec-conf
+		fi
+	fi
+
+	echo -n "--with-suexec-safepath=${safepath} "
+	echo -n "--with-suexec-logfile=${logfile} "
+	echo -n "--with-suexec-userdir=${userdir} "
+	echo -n "--with-suexec-caller=${caller} "
+	echo -n "--with-suexec-docroot=${docroot} "
+	echo -n "--with-suexec-uidmin=${uidmin} "
+	echo -n "--with-suexec-gidmin=${gidmin} "
+	echo -n "--with-suexec-umask=${sumask} "
+
+else
+	cat <<EOF_USAGE
+$0 - a configuration utility for suexec
+
+You can set suexec options in /etc/apache2/suexec-conf.
+Note: you need to re-emerge apache for changes to take effect.
+
+This script doesn't do much, yet.
+A much more useful implementation of this program is in the works.
+See Gentoo Bug 66397 for more details.
+-- Michael Stewart <vericgar@gentoo.org) Feb 05 2006
+
+
+Options:
+
+  --config [filename]    Output ./configure options for apache
+
+
+EOF_USAGE
+fi
+
+
