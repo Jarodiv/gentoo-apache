@@ -1,6 +1,6 @@
-diff -ur apache_1.3.33.orig/src/modules/standard/mod_dir.c apache_1.3.33/src/modules/standard/mod_dir.c
---- apache_1.3.33.orig/src/modules/standard/mod_dir.c	2004-02-20 12:37:40.000000000 -0800
-+++ apache_1.3.33/src/modules/standard/mod_dir.c	2005-09-17 16:34:20.000000000 -0700
+diff -ur apache_1.3.34.orig/src/modules/standard/mod_dir.c apache_1.3.34/src/modules/standard/mod_dir.c
+--- apache_1.3.34.orig/src/modules/standard/mod_dir.c	2004-11-24 11:10:19.000000000 -0800
++++ apache_1.3.34/src/modules/standard/mod_dir.c	2006-04-01 15:09:24.000000000 -0800
 @@ -30,6 +30,7 @@
  
  typedef struct dir_config_struct {
@@ -9,12 +9,14 @@ diff -ur apache_1.3.33.orig/src/modules/standard/mod_dir.c apache_1.3.33/src/mod
  } dir_config_rec;
  
  #define DIR_CMD_PERMS OR_INDEXES
-@@ -45,11 +46,67 @@
+@@ -45,11 +46,25 @@
      return NULL;
  }
  
-+static const char *addincr_index(cmd_parms *cmd, dir_config_rec *d, char *arg)
++static const char *add_index_incr(cmd_parms *cmd, void *dummy, char *arg)
 +{
++    dir_config_rec *d = dummy;
++
 +    if (!d->index_names_incr) {
 +	d->index_names_incr = ap_make_array(cmd->pool, 2, sizeof(char *));
 +    }
@@ -22,62 +24,18 @@ diff -ur apache_1.3.33.orig/src/modules/standard/mod_dir.c apache_1.3.33/src/mod
 +    return NULL;
 +}
 +
-+static const char *rem_index(cmd_parms * cmd, dir_config_rec *d, char *arg)
-+{
-+	array_header *keep;
-+	array_header *keep_incr;
-+	char **names_ptr;
-+	int num_names;
-+
-+	keep = ap_make_array(cmd->pool, 2, sizeof(char *));
-+	keep_incr = ap_make_array(cmd->pool, 2, sizeof(char *));
-+
-+	if (d->index_names) {
-+		names_ptr = (char **)d->index_names->elts;
-+		num_names = d->index_names->nelts;
-+
-+		for (; num_names; ++names_ptr, --num_names) {
-+			char *name_ptr = *names_ptr;
-+
-+			if (strcmp(name_ptr, arg) != 0 ) {
-+				*(char **)ap_push_array(keep) = name_ptr;
-+			}
-+		}
-+		d->index_names = keep;
-+	}
-+
-+	if (d->index_names_incr) {
-+		names_ptr = (char **)d->index_names_incr->elts;
-+		num_names = d->index_names_incr->nelts;
-+
-+		for (; num_names; ++names_ptr, --num_names) {
-+			char *name_ptr = *names_ptr;
-+
-+			if (strcmp(name_ptr, arg) != 0 ) {
-+				*(char **)ap_push_array(keep_incr) = name_ptr;
-+			}
-+		}
-+		d->index_names_incr = keep_incr;
-+	}
-+	
-+	return NULL;
-+}
-+
  static const command_rec dir_cmds[] =
  {
      {"DirectoryIndex", add_index, NULL,
       DIR_CMD_PERMS, ITERATE,
       "a list of file names"},
-+    {"AddDirectoryIndex", addincr_index, NULL,
-+     DIR_CMD_PERMS, ITERATE,
-+     "a list of file names"},
-+    {"RemoveDirectoryIndex", rem_index, NULL,
++    {"AddDirectoryIndex", add_index_incr, NULL,
 +     DIR_CMD_PERMS, ITERATE,
 +     "a list of file names"},
      {NULL}
  };
  
-@@ -59,6 +116,7 @@
+@@ -59,6 +74,7 @@
      (dir_config_rec *) ap_pcalloc(p, sizeof(dir_config_rec));
  
      new->index_names = NULL;
@@ -85,59 +43,46 @@ diff -ur apache_1.3.33.orig/src/modules/standard/mod_dir.c apache_1.3.33/src/mod
      return (void *) new;
  }
  
-@@ -69,6 +127,7 @@
+@@ -68,7 +84,26 @@
+     dir_config_rec *base = (dir_config_rec *) basev;
      dir_config_rec *add = (dir_config_rec *) addv;
  
-     new->index_names = add->index_names ? add->index_names : base->index_names;
-+    new->index_names_incr = ap_append_arrays(p, base->index_names, add->index_names);
+-    new->index_names = add->index_names ? add->index_names : base->index_names;
++
++	if (add->index_names) {
++		new->index_names = add->index_names;
++	} else {
++		new->index_names = base->index_names;
++		if (base->index_names_incr) {
++			if (!new->index_names) {
++				new->index_names = ap_make_array(p, 2, sizeof(char *));
++			}
++			ap_array_cat(new->index_names, base->index_names_incr);
++		}
++	}
++
++	if (add->index_names_incr) {
++		if (!new->index_names) {
++			new->index_names = ap_make_array(p, 2, sizeof(char *));
++		}
++		ap_array_cat(new->index_names, add->index_names_incr);
++	}
++	
      return new;
  }
  
-@@ -77,11 +136,11 @@
-     dir_config_rec *d =
-     (dir_config_rec *) ap_get_module_config(r->per_dir_config,
-                                          &dir_module);
--    char *dummy_ptr[1];
-     char **names_ptr;
-     int num_names;
-     int error_notfound = 0;
--
-+	array_header *index_names;
-+ 
-     if (r->uri[0] == '\0' || r->uri[strlen(r->uri) - 1] != '/') {
-         char *ifile;
-         if (r->args != NULL)
-@@ -105,16 +164,23 @@
+@@ -105,6 +140,14 @@
          r->filename = ap_pstrcat(r->pool, r->filename, "/", NULL);
      }
  
--    if (d->index_names) {
--	names_ptr = (char **)d->index_names->elts;
--	num_names = d->index_names->nelts;
--    }
--    else {
--	dummy_ptr[0] = DEFAULT_INDEX;
--	names_ptr = dummy_ptr;
--	num_names = 1;
--    }
--
-+	/* Merge index_names and index_names_incr */
-+	if (d->index_names) {
-+		if (d->index_names_incr) {
-+			index_names = ap_append_arrays(r->pool, d->index_names, d->index_names_incr);
++	if (d->index_names_incr) {
++		if (!d->index_names) {
++			d->index_names = d->index_names_incr;
 +		} else {
-+			index_names = d->index_names;
++			ap_array_cat(d->index_names, d->index_names_incr);
 +		}
-+	} else if (d->index_names_incr) {
-+		index_names = d->index_names_incr;
-+	} else {
-+        index_names = ap_make_array(r->pool, 2, sizeof(char *));
-+    	*(const char **)ap_push_array(index_names) = DEFAULT_INDEX;
 +	}
 +
-+	names_ptr = (char **)index_names->elts;
-+	num_names = index_names->nelts;
-+		
-     for (; num_names; ++names_ptr, --num_names) {
-         char *name_ptr = *names_ptr;
-         request_rec *rr = ap_sub_req_lookup_uri(name_ptr, r);
+     if (d->index_names) {
+ 	names_ptr = (char **)d->index_names->elts;
+ 	num_names = d->index_names->nelts;
