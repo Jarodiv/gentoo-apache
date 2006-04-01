@@ -1,13 +1,6 @@
-This patch, by Michael Stewart <vericgar@gentoo.org> creates a new directive,
-AddDirectoryIndex, which adds to the list of file names that mod_dir considers
-an index file.
-
-This patch is needed to make it possible for individual module configuration 
-files to add items to the directory index without resetting DirectoryIndex.
-
-diff -ur httpd-2.2.0/modules/mappers/mod_dir.c httpd-2.2.0.patched/modules/mappers/mod_dir.c
---- httpd-2.2.0/modules/mappers/mod_dir.c	2005-11-10 07:20:05.000000000 -0800
-+++ httpd-2.2.0.patched/modules/mappers/mod_dir.c	2006-02-04 17:09:33.000000000 -0800
+diff -ur httpd-2.0.55.orig/modules/mappers/mod_dir.c httpd-2.0.55/modules/mappers/mod_dir.c
+--- httpd-2.0.55.orig/modules/mappers/mod_dir.c	2005-02-04 12:21:18.000000000 -0800
++++ httpd-2.0.55/modules/mappers/mod_dir.c	2006-03-31 17:56:16.000000000 -0800
 @@ -39,6 +39,7 @@
  
  typedef struct dir_config_struct {
@@ -51,33 +44,44 @@ diff -ur httpd-2.2.0/modules/mappers/mod_dir.c httpd-2.2.0.patched/modules/mappe
      new->do_slash = SLASH_UNSET;
      return (void *) new;
  }
-@@ -87,7 +102,19 @@
+@@ -87,7 +102,26 @@
      dir_config_rec *base = (dir_config_rec *)basev;
      dir_config_rec *add = (dir_config_rec *)addv;
  
 -    new->index_names = add->index_names ? add->index_names : base->index_names;
++
 +	if (add->index_names) {
 +		new->index_names = add->index_names;
 +	} else {
 +		new->index_names = base->index_names;
 +		if (base->index_names_incr) {
++			if (!new->index_names) {
++				new->index_names = apr_array_make(p, 2, sizeof(char *));
++			}
 +			apr_array_cat(new->index_names, base->index_names_incr);
 +		}
 +	}
 +
 +	if (add->index_names_incr) {
++		if (!new->index_names) {
++			new->index_names = apr_array_make(p, 2, sizeof(char *));
++		}
 +		apr_array_cat(new->index_names, add->index_names_incr);
 +	}
 +	
      new->do_slash =
          (add->do_slash == SLASH_UNSET) ? base->do_slash : add->do_slash;
      return new;
-@@ -155,6 +182,10 @@
+@@ -155,6 +189,14 @@
          return DECLINED;
      }
  
 +	if (d->index_names_incr) {
-+		apr_array_cat(d->index_names, d->index_names_incr);
++		if (!d->index_names) {
++			d->index_names = d->index_names_incr;
++		} else {
++			apr_array_cat(d->index_names, d->index_names_incr);
++		}
 +	}
 +
      if (d->index_names) {
