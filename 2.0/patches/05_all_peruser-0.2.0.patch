@@ -1,6 +1,6 @@
-diff -Nur httpd-2.0.52/server/mpm/config.m4 httpd-2.0.52-peruser/server/mpm/config.m4
---- httpd-2.0.52/server/mpm/config.m4	2003-03-11 00:07:52.000000000 -0700
-+++ httpd-2.0.52-peruser/server/mpm/config.m4	2005-07-12 01:57:22.000000000 -0600
+diff -Nur httpd-2.0.55/server/mpm/config.m4 httpd-2.0.55-new/server/mpm/config.m4
+--- httpd-2.0.55/server/mpm/config.m4	2004-11-24 12:31:09.000000000 -0700
++++ httpd-2.0.55-new/server/mpm/config.m4	2006-03-02 01:12:04.000000000 -0700
 @@ -1,7 +1,7 @@
  AC_MSG_CHECKING(which MPM to use)
  AC_ARG_WITH(mpm,
@@ -19,132 +19,25 @@ diff -Nur httpd-2.0.52/server/mpm/config.m4 httpd-2.0.52-peruser/server/mpm/conf
    AC_MSG_WARN(You have selected an EXPERIMENTAL MPM.  Be warned!)
    MPM_SUBDIR_NAME=experimental/$MPM_NAME
  else
-diff -Nur httpd-2.0.52/server/mpm/experimental/peruser/Makefile.in httpd-2.0.52-peruser/server/mpm/experimental/peruser/Makefile.in
---- httpd-2.0.52/server/mpm/experimental/peruser/Makefile.in	1969-12-31 17:00:00.000000000 -0700
-+++ httpd-2.0.52-peruser/server/mpm/experimental/peruser/Makefile.in	2005-07-12 01:57:22.000000000 -0600
+diff -Nur httpd-2.0.55/server/mpm/experimental/peruser/config.m4 httpd-2.0.55-new/server/mpm/experimental/peruser/config.m4
+--- httpd-2.0.55/server/mpm/experimental/peruser/config.m4	1969-12-31 17:00:00.000000000 -0700
++++ httpd-2.0.55-new/server/mpm/experimental/peruser/config.m4	2006-03-02 01:12:04.000000000 -0700
+@@ -0,0 +1,3 @@
++if test "$MPM_NAME" = "peruser" ; then
++    APACHE_FAST_OUTPUT(server/mpm/experimental/$MPM_NAME/Makefile)
++fi
+diff -Nur httpd-2.0.55/server/mpm/experimental/peruser/Makefile.in httpd-2.0.55-new/server/mpm/experimental/peruser/Makefile.in
+--- httpd-2.0.55/server/mpm/experimental/peruser/Makefile.in	1969-12-31 17:00:00.000000000 -0700
++++ httpd-2.0.55-new/server/mpm/experimental/peruser/Makefile.in	2006-03-02 01:12:04.000000000 -0700
 @@ -0,0 +1,5 @@
 +
 +LTLIBRARY_NAME    = libperuser.la
 +LTLIBRARY_SOURCES = peruser.c
 +
 +include $(top_srcdir)/build/ltlib.mk
-diff -Nur httpd-2.0.52/server/mpm/experimental/peruser/config.m4 httpd-2.0.52-peruser/server/mpm/experimental/peruser/config.m4
---- httpd-2.0.52/server/mpm/experimental/peruser/config.m4	1969-12-31 17:00:00.000000000 -0700
-+++ httpd-2.0.52-peruser/server/mpm/experimental/peruser/config.m4	2005-07-12 01:57:22.000000000 -0600
-@@ -0,0 +1,3 @@
-+if test "$MPM_NAME" = "peruser" ; then
-+    APACHE_FAST_OUTPUT(server/mpm/experimental/$MPM_NAME/Makefile)
-+fi
-diff -Nur httpd-2.0.52/server/mpm/experimental/peruser/mpm.h httpd-2.0.52-peruser/server/mpm/experimental/peruser/mpm.h
---- httpd-2.0.52/server/mpm/experimental/peruser/mpm.h	1969-12-31 17:00:00.000000000 -0700
-+++ httpd-2.0.52-peruser/server/mpm/experimental/peruser/mpm.h	2005-07-12 01:57:22.000000000 -0600
-@@ -0,0 +1,103 @@
-+/* ====================================================================
-+ * The Apache Software License, Version 1.1
-+ *
-+ * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
-+ * reserved.
-+ *
-+ * Redistribution and use in source and binary forms, with or without
-+ * modification, are permitted provided that the following conditions
-+ * are met:
-+ *
-+ * 1. Redistributions of source code must retain the above copyright
-+ *    notice, this list of conditions and the following disclaimer.
-+ *
-+ * 2. Redistributions in binary form must reproduce the above copyright
-+ *    notice, this list of conditions and the following disclaimer in
-+ *    the documentation and/or other materials provided with the
-+ *    distribution.
-+ *
-+ * 3. The end-user documentation included with the redistribution,
-+ *    if any, must include the following acknowledgment:
-+ *       "This product includes software developed by the
-+ *        Apache Software Foundation (http://www.apache.org/)."
-+ *    Alternately, this acknowledgment may appear in the software itself,
-+ *    if and wherever such third-party acknowledgments normally appear.
-+ *
-+ * 4. The names "Apache" and "Apache Software Foundation" must
-+ *    not be used to endorse or promote products derived from this
-+ *    software without prior written permission. For written
-+ *    permission, please contact apache@apache.org.
-+ *
-+ * 5. Products derived from this software may not be called "Apache",
-+ *    nor may "Apache" appear in their name, without prior written
-+ *    permission of the Apache Software Foundation.
-+ *
-+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESSED OR IMPLIED
-+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
-+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-+ * DISCLAIMED.  IN NO EVENT SHALL THE APACHE SOFTWARE FOUNDATION OR
-+ * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
-+ * USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
-+ * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
-+ * SUCH DAMAGE.
-+ * ====================================================================
-+ *
-+ * This software consists of voluntary contributions made by many
-+ * individuals on behalf of the Apache Software Foundation.  For more
-+ * information on the Apache Software Foundation, please see
-+ * <http://www.apache.org/>.
-+ *
-+ * Portions of this software are based upon public domain software
-+ * originally written at the National Center for Supercomputing Applications,
-+ * University of Illinois, Urbana-Champaign.
-+ */
-+
-+#include "httpd.h"
-+#include "mpm_default.h"
-+#include "scoreboard.h"
-+#include "unixd.h"
-+
-+#ifndef APACHE_MPM_PERUSER_H
-+#define APACHE_MPM_PERUSER_H
-+
-+#define PERUSER_MPM
-+
-+#define MPM_NAME "Peruser"
-+
-+#define AP_MPM_WANT_RECLAIM_CHILD_PROCESSES
-+#define AP_MPM_WANT_WAIT_OR_TIMEOUT
-+#define AP_MPM_WANT_PROCESS_CHILD_STATUS
-+#define AP_MPM_WANT_SET_PIDFILE
-+#define AP_MPM_WANT_SET_SCOREBOARD
-+#define AP_MPM_WANT_SET_LOCKFILE
-+#define AP_MPM_WANT_SET_MAX_REQUESTS
-+#define AP_MPM_WANT_SET_COREDUMPDIR
-+#define AP_MPM_WANT_SET_ACCEPT_LOCK_MECH
-+#define AP_MPM_WANT_SIGNAL_SERVER
-+#define AP_MPM_WANT_SET_MAX_MEM_FREE
-+#define AP_MPM_DISABLE_NAGLE_ACCEPTED_SOCK
-+
-+#define AP_MPM_USES_POD 1
-+#define MPM_CHILD_PID(i) (ap_scoreboard_image->parent[i].pid)
-+#define MPM_NOTE_CHILD_KILLED(i) (MPM_CHILD_PID(i) = 0)
-+#define MPM_ACCEPT_FUNC unixd_accept
-+
-+extern int ap_threads_per_child;
-+extern int ap_max_daemons_limit;
-+extern server_rec *ap_server_conf;
-+
-+/* Table of child status */
-+#define SERVER_DEAD 0
-+#define SERVER_DYING 1
-+#define SERVER_ALIVE 2
-+
-+typedef struct ap_ctable {
-+    pid_t pid;
-+    unsigned char status;
-+} ap_ctable;
-+
-+#endif /* APACHE_MPM_PERUSER_H */
-diff -Nur httpd-2.0.52/server/mpm/experimental/peruser/mpm_default.h httpd-2.0.52-peruser/server/mpm/experimental/peruser/mpm_default.h
---- httpd-2.0.52/server/mpm/experimental/peruser/mpm_default.h	1969-12-31 17:00:00.000000000 -0700
-+++ httpd-2.0.52-peruser/server/mpm/experimental/peruser/mpm_default.h	2005-07-12 01:57:22.000000000 -0600
+diff -Nur httpd-2.0.55/server/mpm/experimental/peruser/mpm_default.h httpd-2.0.55-new/server/mpm/experimental/peruser/mpm_default.h
+--- httpd-2.0.55/server/mpm/experimental/peruser/mpm_default.h	1969-12-31 17:00:00.000000000 -0700
++++ httpd-2.0.55-new/server/mpm/experimental/peruser/mpm_default.h	2006-03-02 01:12:04.000000000 -0700
 @@ -0,0 +1,110 @@
 +/* ====================================================================
 + * The Apache Software License, Version 1.1
@@ -256,10 +149,117 @@ diff -Nur httpd-2.0.52/server/mpm/experimental/peruser/mpm_default.h httpd-2.0.5
 +#endif
 +
 +#endif /* AP_MPM_DEFAULT_H */
-diff -Nur httpd-2.0.52/server/mpm/experimental/peruser/peruser.c httpd-2.0.52-peruser/server/mpm/experimental/peruser/peruser.c
---- httpd-2.0.52/server/mpm/experimental/peruser/peruser.c	1969-12-31 17:00:00.000000000 -0700
-+++ httpd-2.0.52-peruser/server/mpm/experimental/peruser/peruser.c	2005-07-12 01:57:38.000000000 -0600
-@@ -0,0 +1,2796 @@
+diff -Nur httpd-2.0.55/server/mpm/experimental/peruser/mpm.h httpd-2.0.55-new/server/mpm/experimental/peruser/mpm.h
+--- httpd-2.0.55/server/mpm/experimental/peruser/mpm.h	1969-12-31 17:00:00.000000000 -0700
++++ httpd-2.0.55-new/server/mpm/experimental/peruser/mpm.h	2006-03-02 01:12:04.000000000 -0700
+@@ -0,0 +1,103 @@
++/* ====================================================================
++ * The Apache Software License, Version 1.1
++ *
++ * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
++ * reserved.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ *
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ *
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in
++ *    the documentation and/or other materials provided with the
++ *    distribution.
++ *
++ * 3. The end-user documentation included with the redistribution,
++ *    if any, must include the following acknowledgment:
++ *       "This product includes software developed by the
++ *        Apache Software Foundation (http://www.apache.org/)."
++ *    Alternately, this acknowledgment may appear in the software itself,
++ *    if and wherever such third-party acknowledgments normally appear.
++ *
++ * 4. The names "Apache" and "Apache Software Foundation" must
++ *    not be used to endorse or promote products derived from this
++ *    software without prior written permission. For written
++ *    permission, please contact apache@apache.org.
++ *
++ * 5. Products derived from this software may not be called "Apache",
++ *    nor may "Apache" appear in their name, without prior written
++ *    permission of the Apache Software Foundation.
++ *
++ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESSED OR IMPLIED
++ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
++ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
++ * DISCLAIMED.  IN NO EVENT SHALL THE APACHE SOFTWARE FOUNDATION OR
++ * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
++ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
++ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
++ * USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
++ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
++ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
++ * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
++ * SUCH DAMAGE.
++ * ====================================================================
++ *
++ * This software consists of voluntary contributions made by many
++ * individuals on behalf of the Apache Software Foundation.  For more
++ * information on the Apache Software Foundation, please see
++ * <http://www.apache.org/>.
++ *
++ * Portions of this software are based upon public domain software
++ * originally written at the National Center for Supercomputing Applications,
++ * University of Illinois, Urbana-Champaign.
++ */
++
++#include "httpd.h"
++#include "mpm_default.h"
++#include "scoreboard.h"
++#include "unixd.h"
++
++#ifndef APACHE_MPM_PERUSER_H
++#define APACHE_MPM_PERUSER_H
++
++#define PERUSER_MPM
++
++#define MPM_NAME "Peruser"
++
++#define AP_MPM_WANT_RECLAIM_CHILD_PROCESSES
++#define AP_MPM_WANT_WAIT_OR_TIMEOUT
++#define AP_MPM_WANT_PROCESS_CHILD_STATUS
++#define AP_MPM_WANT_SET_PIDFILE
++#define AP_MPM_WANT_SET_SCOREBOARD
++#define AP_MPM_WANT_SET_LOCKFILE
++#define AP_MPM_WANT_SET_MAX_REQUESTS
++#define AP_MPM_WANT_SET_COREDUMPDIR
++#define AP_MPM_WANT_SET_ACCEPT_LOCK_MECH
++#define AP_MPM_WANT_SIGNAL_SERVER
++#define AP_MPM_WANT_SET_MAX_MEM_FREE
++#define AP_MPM_DISABLE_NAGLE_ACCEPTED_SOCK
++
++#define AP_MPM_USES_POD 1
++#define MPM_CHILD_PID(i) (ap_scoreboard_image->parent[i].pid)
++#define MPM_NOTE_CHILD_KILLED(i) (MPM_CHILD_PID(i) = 0)
++#define MPM_ACCEPT_FUNC unixd_accept
++
++extern int ap_threads_per_child;
++extern int ap_max_daemons_limit;
++extern server_rec *ap_server_conf;
++
++/* Table of child status */
++#define SERVER_DEAD 0
++#define SERVER_DYING 1
++#define SERVER_ALIVE 2
++
++typedef struct ap_ctable {
++    pid_t pid;
++    unsigned char status;
++} ap_ctable;
++
++#endif /* APACHE_MPM_PERUSER_H */
+diff -Nur httpd-2.0.55/server/mpm/experimental/peruser/peruser.c httpd-2.0.55-new/server/mpm/experimental/peruser/peruser.c
+--- httpd-2.0.55/server/mpm/experimental/peruser/peruser.c	1969-12-31 17:00:00.000000000 -0700
++++ httpd-2.0.55-new/server/mpm/experimental/peruser/peruser.c	2006-03-06 02:08:38.000000000 -0700
+@@ -0,0 +1,2935 @@
 +/* ====================================================================
 + * The Apache Software License, Version 1.1
 + *
@@ -328,7 +328,6 @@ diff -Nur httpd-2.0.52/server/mpm/experimental/peruser/peruser.c httpd-2.0.52-pe
 +#include "apr_strings.h"
 +#include "apr_thread_proc.h"
 +#include "apr_signal.h"
-+
 +#define APR_WANT_STDIO
 +#define APR_WANT_STRFUNC
 +#define APR_WANT_IOVEC
@@ -1082,13 +1081,155 @@ diff -Nur httpd-2.0.52/server/mpm/experimental/peruser/peruser.c httpd-2.0.52-pe
 +    return 0;
 +}
 +
++/*
++ * This function sends a raw socket over to a processor. It uses the same
++ * on-wire format as pass_request. The recipient can determine if he got
++ * a socket or a whole request by inspecting the header_length of the
++ * message. If it is zero then only a socket was sent.
++ */
++static int pass_socket(apr_socket_t *thesock, child_info_t *processor, apr_pool_t *pool)
++{
++    int rv;
++    struct msghdr msg;
++    struct cmsghdr *cmsg;
++    int sock_fd;
++    char *body = "";
++    struct iovec iov[4];
++    apr_size_t len = 0;
++    apr_size_t header_len = 0;
++    apr_size_t body_len = 0;
++    peruser_header h;
++    apr_bucket *bucket;
++    const apr_array_header_t *headers_in_array;
++    const apr_table_entry_t *headers_in;
++    int counter;
++
++    if (!processor)
++    {
++        _DBG("server %s in child %d has no child_info associated",
++                "(unkonwn)", my_child_num);
++        return -1;
++    }
++
++    _DBG("passing request to another child.", 0);
++
++    apr_os_sock_get(&sock_fd, thesock);
++    
++    header_len = 0;
++    body_len = 0;
++
++    iov[0].iov_base = &header_len;
++    iov[0].iov_len  = sizeof(header_len);
++    iov[1].iov_base = &body_len;
++    iov[1].iov_len  = sizeof(body_len);
++    iov[2].iov_base = h.headers;
++    iov[2].iov_len  = 0;
++    iov[3].iov_base = body;
++    iov[3].iov_len  = body_len;
++
++    msg.msg_name    = NULL;
++    msg.msg_namelen = 0;
++    msg.msg_iov     = iov;
++    msg.msg_iovlen  = 4;
++
++    cmsg = apr_palloc(pool, sizeof(*cmsg) + sizeof(sock_fd));
++    cmsg->cmsg_len   = sizeof(*cmsg) + sizeof(sock_fd);
++    cmsg->cmsg_level = SOL_SOCKET;
++    cmsg->cmsg_type  = SCM_RIGHTS;
++
++    memcpy(CMSG_DATA(cmsg), &sock_fd, sizeof(sock_fd));
++
++    msg.msg_control    = cmsg;
++    msg.msg_controllen = cmsg->cmsg_len;
++
++    if (processor->status == CHILD_STATUS_STANDBY)
++    {
++        _DBG("Activating child #%d", processor->id);
++        processor->status = CHILD_STATUS_STARTING;
++    }
++
++    while (processor->status != CHILD_STATUS_ACTIVE)
++    {
++        _DBG("Waiting for child #%d...", processor->id);
++        sleep(1);
++    }
++
++    _DBG("Writing message to %d, passing sock_fd:  %d", processor->senv->output, sock_fd);
++    _DBG("header_len=%d headers=\"%s\"", header_len, h.headers);
++    _DBG("body_len=%d body=\"%s\"", body_len, body);
++
++    if ((rv = sendmsg(processor->senv->output, &msg, 0)) == -1)
++    {
++        apr_pool_destroy(pool);
++        ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, ap_server_conf,
++                     "Writing message failed %d %d", rv, errno);
++        return -1;
++    }
++
++    _DBG("Writing message succeeded %d", rv);
++
++    /* -- close the socket on our side -- */
++    _DBG("closing socket %d on our side", sock_fd);
++    apr_socket_close(thesock);
++
++    apr_pool_destroy(pool);
++    return 1;
++}
++
 +static void process_socket(apr_pool_t *p, apr_socket_t *sock, long conn_id,
-+                           apr_bucket_alloc_t *bucket_alloc)
++                           apr_bucket_alloc_t *bucket_alloc, apr_pool_t *pool)
 +{
 +    conn_rec *current_conn;
 +    int sock_fd;
 +    apr_status_t rv;
 +    ap_sb_handle_t *sbh;
++    child_info_t *processor;
++    apr_pool_t *ptrans;
++    peruser_server_conf *sconf;
++
++    _DBG("Creating dummy connection to use the vhost lookup api", 0);
++
++    ap_create_sb_handle(&sbh, p, conn_id, 0);
++    current_conn = ap_run_create_connection(p, ap_server_conf, sock, conn_id,
++                                            sbh, bucket_alloc);
++    _DBG("Looking up the right vhost");
++    ap_update_vhost_given_ip(current_conn);
++    _DBG("Base server is %s, name based vhosts %s", current_conn->base_server->server_hostname,
++		    current_conn->vhost_lookup_data ? "on" : "off");
++     
++	
++    if (!current_conn->vhost_lookup_data && CHILD_INFO_TABLE[my_child_num].type == CHILD_TYPE_MULTIPLEXER) {
++    	_DBG("We are not using name based vhosts, we'll directly pass the socket.");
++	
++	sconf = PERUSER_SERVER_CONF(current_conn->base_server->module_config);
++	processor = &CHILD_INFO_TABLE[sconf->senv->processor_id];
++
++	_DBG("Forwarding without further inspection, processor %d", processor->id);
++        if (processor->status == CHILD_STATUS_STANDBY)
++        {
++             _DBG("Activating child #%d", processor->id);
++             processor->status = CHILD_STATUS_STARTING;
++        }
++
++        _DBG("Creating new pool",0);
++	apr_pool_create(&ptrans, pool);
++        _DBG("Passing request.",0);
++        if (pass_socket(sock, processor, ptrans) == -1)
++        {
++            ap_log_error(APLOG_MARK, APLOG_ERR, 0,
++                  ap_server_conf, "Could not pass request to proper "                             
++                  "child, request will not be honoured.");
++             return;
++        }
++        if (current_conn)
++        {
++            _DBG("freeing connection",0);
++            ap_lingering_close(current_conn);
++        }
++        _DBG("doing longjmp",0);
++        longjmp(CHILD_INFO_TABLE[my_child_num].jmpbuffer, 1);
++	return;
++    }
 +
 +    if ((rv = apr_os_sock_get(&sock_fd, sock)) != APR_SUCCESS)
 +    {
@@ -1115,9 +1256,11 @@ diff -Nur httpd-2.0.52/server/mpm/experimental/peruser/peruser.c httpd-2.0.52-pe
 +        ap_sock_disable_nagle(sock);
 +    }
 +
-+    ap_create_sb_handle(&sbh, p, conn_id, 0);
-+    current_conn = ap_run_create_connection(p, ap_server_conf, sock, conn_id,
-+                                            sbh, bucket_alloc);
++    if (!current_conn) {
++        ap_create_sb_handle(&sbh, p, conn_id, 0);
++        current_conn = ap_run_create_connection(p, ap_server_conf, sock, conn_id,
++                                                sbh, bucket_alloc);
++    }
 +
 +    if (current_conn)
 +    {
@@ -1148,10 +1291,8 @@ diff -Nur httpd-2.0.52/server/mpm/experimental/peruser/peruser.c httpd-2.0.52-pe
 +            net = filter->ctx;
 +            net->in_ctx = apr_palloc(conn->pool, sizeof(*net->in_ctx));
 +            net->in_ctx->b = bb;
-+/*
 +            net->in_ctx->tmpbb = apr_brigade_create(net->in_ctx->b->p, 
 +                net->in_ctx->b->bucket_alloc);
-+*/
 +        }
 +    }
 +    _DBG("leaving (DECLINED)", 0);
@@ -1309,12 +1450,6 @@ diff -Nur httpd-2.0.52/server/mpm/experimental/peruser/peruser.c httpd-2.0.52-pe
 +        processor->status = CHILD_STATUS_STARTING;
 +    }
 +
-+    while (processor->status != CHILD_STATUS_ACTIVE)
-+    {
-+        _DBG("Waiting for child #%d...", processor->id);
-+        sleep(1);
-+    }
-+
 +    _DBG("Writing message to %d, passing sock_fd:  %d", processor->senv->output, sock_fd);
 +    _DBG("header_len=%d headers=\"%s\"", header_len, h.headers);
 +    _DBG("body_len=%d body=\"%s\"", body_len, body);
@@ -1399,6 +1534,8 @@ diff -Nur httpd-2.0.52/server/mpm/experimental/peruser/peruser.c httpd-2.0.52-pe
 +    apr_cpystrn(headers, buff, header_len + 1);
 +    _DBG("header_len=%d headers=\"%s\"", header_len, headers);
 +
++if (header_len) {    
++    _DBG("header_len > 0, we got a request", 0);
 +    /* -- store received data into an brigade and add
 +          it to the current transaction's pool -- */
 +    bucket = apr_bucket_eos_create(alloc);
@@ -1420,7 +1557,9 @@ diff -Nur httpd-2.0.52/server/mpm/experimental/peruser/peruser.c httpd-2.0.52-pe
 +
 +    APR_BRIGADE_INSERT_HEAD(bb, bucket);
 +    apr_pool_userdata_set(bb, "PERUSER_SOCKETS", NULL, ptrans);
-+
++} else {
++    _DBG("header_len == 0, we got a socket only", 0);
++}
 +    _DBG("returning 0", 0);
 +    return 0;
 +}
@@ -1815,7 +1954,7 @@ diff -Nur httpd-2.0.52/server/mpm/experimental/peruser/peruser.c httpd-2.0.52-pe
 +
 +          if(total_processors(my_child_num) <
 +              CHILD_INFO_TABLE[my_child_num].senv->max_processors &&
-+            idle_processors(my_child_num) <
++            idle_processors(my_child_num) <=
 +              CHILD_INFO_TABLE[my_child_num].senv->min_free_processors)
 +          {
 +              _DBG("CLONING CHILD");
@@ -1827,7 +1966,7 @@ diff -Nur httpd-2.0.52/server/mpm/experimental/peruser/peruser.c httpd-2.0.52-pe
 +        {
 +            _DBG("marked jmpbuffer",0);
 +            _TRACE_CALL("process_socket()",0);
-+            process_socket(ptrans, sock, my_child_num, bucket_alloc);
++            process_socket(ptrans, sock, my_child_num, bucket_alloc, pchild);
 +            _TRACE_RET("process_socket()",0);
 +        }
 +        else
