@@ -70,7 +70,6 @@ start() {
 	checkconfig || return 1
 	ebegin "Starting apache2"
 	[ -f /var/log/apache2/ssl_scache ] && rm /var/log/apache2/ssl_scache
-	[ -f /usr/lib/apache2/build/envvars ] && . /usr/lib/apache2/build/envvars
 	${APACHE2} ${APACHE2_OPTS} -k start
 	eend $?
 }
