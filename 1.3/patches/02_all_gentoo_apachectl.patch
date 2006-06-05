@@ -12,12 +12,17 @@ diff -Nup -Nrup apache_1.3.33.orig/Makefile.tmpl apache_1.3.33.patched/Makefile.
 diff -Nup -Nrup apache_1.3.33.orig/src/support/apachectl apache_1.3.33.patched/src/support/apachectl
 --- apache_1.3.33.orig/src/support/apachectl	2004-02-20 22:02:24.000000000 +0000
 +++ apache_1.3.33.patched/src/support/apachectl	2005-02-18 03:00:53.000000000 +0000
-@@ -40,12 +40,16 @@
+@@ -40,12 +40,21 @@
  PIDFILE=/usr/local/apache/logs/httpd.pid
  #
  # the path to your httpd binary, including options if necessary
 -HTTPD='/usr/local/apache/src/httpd'
 +. /etc/conf.d/apache
++CONFIGFILE="${CONFIGFILE:-/etc/apache/httpd.conf}"
++SERVERROOT="${SERVERROOT:-/usr/lib/apache}"
++[ ${CONFIGFILE:0:1} != "/" ] && CONFIGFILE="${SERVERROOT}/${CONFIGFILE}"
++[ -n "${CONFIGFILE}" ] && APACHE_OPTS="${APACHE_OPTS} -f ${CONFIGFILE}"
++[ -n "${SERVERROOT}" ] && APACHE_OPTS="${APACHE_OPTS} -d ${SERVERROOT}"
 +HTTPD="/usr/sbin/apache ${APACHE_OPTS}"
  #
  # a command that outputs a formatted text version of the HTML at the
@@ -30,7 +35,7 @@ diff -Nup -Nrup apache_1.3.33.orig/src/support/apachectl apache_1.3.33.patched/s
  #
  # the URL to your server's mod_status status page.  If you do not
  # have one, then status and fullstatus will not work.
-@@ -60,6 +64,14 @@ if [ "x$ARGV" = "x" ] ; then 
+@@ -60,6 +69,14 @@ if [ "x$ARGV" = "x" ] ; then 
      ARGS="help"
  fi
  
