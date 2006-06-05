@@ -939,7 +939,7 @@ diff -NurpP httpd-2.2.0/server/mpm/experimental/peruser/peruser.c httpd-2.2.0-pe
 +    if (die_now) return APR_SUCCESS;
 +
 +    /* apr_thread_mutex_lock(pipe_of_death_mutex); */
-+    ret = apr_recv(lr->sd, &pipe_read_char, &n);
++    ret = apr_socket_recv(lr->sd, &pipe_read_char, &n);
 +    if (APR_STATUS_IS_EAGAIN(ret))
 +    {
 +            /* It lost the lottery. It must continue to suffer
@@ -2453,7 +2453,7 @@ diff -NurpP httpd-2.2.0/server/mpm/experimental/peruser/peruser.c httpd-2.2.0-pe
 +		}
 +#if APR_HAS_OTHER_CHILD
 +	    }
-+	    else if (apr_proc_other_child_read(&pid, status) == 0) {
++	    else if (apr_proc_other_child_alert(&pid, APR_OC_REASON_DEATH, status) == 0) {
 +                _DBG("APR_HAS_OTHER_CHILD, apparently", 0);
 +		/* handled */
 +#endif
