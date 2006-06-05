@@ -1,7 +1,15 @@
 diff -Nup -Nrup apache_1.3.33.orig/Makefile.tmpl apache_1.3.33.patched/Makefile.tmpl
 --- apache_1.3.33.orig/Makefile.tmpl	2004-02-20 22:40:50.000000000 +0000
 +++ apache_1.3.33.patched/Makefile.tmpl	2005-02-18 02:56:43.000000000 +0000
-@@ -366,7 +366,6 @@ install-binsupport:
+@@ -313,7 +313,6 @@ install-support:
+ 	fi; \
+ 	echo "$(INSTALL_SCRIPT) $(TOP)/$(SRC)/support/apachectl[*] $(root)$(sbindir)/$${apachectl}"; \
+ 	sed -e 's;PIDFILE=.*;PIDFILE=$(runtimedir)/$(TARGET).pid;' \
+-		-e 's;HTTPD=.*;HTTPD=$(sbindir)/$(TARGET);' \
+ 		< $(TOP)/$(SRC)/support/apachectl > $(TOP)/$(SRC)/.apaci.install.tmp && \
+ 		$(INSTALL_SCRIPT) $(TOP)/$(SRC)/.apaci.install.tmp $(root)$(sbindir)/$${apachectl}; \
+ 	echo "$(INSTALL_DATA) $(TOP)/$(SRC)/support/apachectl.8 $(root)$(mandir)/man8/$${apachectl}.8"; \
+@@ -366,7 +365,6 @@ install-binsupport:
  	fi; \
  	echo "$(INSTALL_SCRIPT) $(TOP)/$(SRC)/support/apachectl[*] $(root)$(sbindir)/$${apachectl}"; \
  	sed -e 's;PIDFILE=.*;PIDFILE=$(runtimedir)/$(TARGET).pid;' \
