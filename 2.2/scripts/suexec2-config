@@ -19,7 +19,8 @@ DEF_USERDIR=public_html
 DEF_UIDMIN=1000
 DEF_UMASK=077
 
-
+BUILDFILES=/usr/lib/apache2/build
+BUILDDIR=/var/tmp/suexec-rebuild
 
 usage() {
 	cat <<EOF_USAGE
@@ -200,11 +201,11 @@ action_rebuild() {
 
 	need_root	# required for installing suexec
 
-	mkdir -p /var/tmp/suexec-conf || die "mkdir /var/tmp/suexec-conf failed"
-	cd /var/tmp/suexec-conf
-	cp /usr/lib/apache2/build/suexec.c . || 
+	mkdir -p ${BUILDDIR} || die "mkdir ${BUILDDIR} failed"
+	cd ${BUILDDIR}
+	cp ${BUILDFILES}/suexec.c . || 
 		die "Unable to copy suexec.c - possibly missing?"
-	cp /usr/lib/apache2/build/Makefile.suexec Makefile || 
+	cp ${BUILDFILES}/Makefile.suexec Makefile || 
 		die "Unable to copy Makefile - possibly missing?"
 	
 	cat > suexec.h <<EOF_SUEXEC_H
