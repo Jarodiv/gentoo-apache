@@ -3,7 +3,7 @@
 # Distributed under the terms of the GNU General Public License v2
 # Author:  Michael Stewart <vericgar@gentoo.org>
 
-MYVERSION='$Revision: 00 $'
+MYVERSION='$Revision$'
 MYVERSION=${MYVERSION#* }
 MYVERSION=${MYVERSION% *}
 
