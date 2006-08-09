@@ -159,7 +159,6 @@ action_conf() {
 	# output ./configure style configuration
 	
 	cat <<EOF_CONF
---with-suexec-bin=${BINARY}  
 --with-suexec-caller=${OPT_CALLER}  
 --with-suexec-docroot=${OPT_DOCROOT} 
 --with-suexec-gidmin=${OPT_GIDMIN} 
