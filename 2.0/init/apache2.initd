@@ -46,7 +46,7 @@ checkconfig() {
 
 	for env_var in ${KEEPENV}; do
 		OLDENV="${OLDENV} ${env_var}=\"`printenv ${env_var}`\""
-		SDDENV="${SSDENV} --env ${env_var}=\"`printenv ${env_var}`\""
+		SSDENV="${SSDENV} --env ${env_var}=\"`printenv ${env_var}`\""
 	done
 
 	APACHE2="/usr/sbin/apache2"
