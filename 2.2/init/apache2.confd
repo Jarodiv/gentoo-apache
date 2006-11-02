@@ -43,16 +43,21 @@ APACHE2_OPTS="-D DEFAULT_VHOST -D LANGUAGE -D INFO"
 
 # A command that outputs a formatted text version of the HTML at the URL
 # of the command line. Designed for lynx, however other programs may work.
-LYNX="lynx -dump"
+#LYNX="lynx -dump"
 
 # The URL to your server's mod_status status page.
 # Required for status and fullstatus
-STATUSURL="http://localhost/server-status"
+#STATUSURL="http://localhost/server-status"
 
 # Environment variables to keep
 # All environment variables are cleared from apache
 # Use this to preserve some of them
 # NOTE!!! It's very important that this contains PATH
-# Also, it will fail if the _value_ of any of these variables contains a space
-KEEPENV="PATH"
+#KEEPENV="PATH"
+
+# Method to use when reloading the server
+# Valid options are 'restart' and 'graceful'
+# See http://httpd.apache.org/docs/2.2/stopping.html for information on
+# what they do and how they differ.
+#RELOAD_TYPE="graceful"
 
