@@ -41,6 +41,5 @@ APACHE2_OPTS="-D DEFAULT_VHOST"
 # All environment variables are cleared from apache
 # Use this to preserve some of them
 # NOTE!!! It's very important that this contains PATH
-# Also, it will fail if the _value_ of any of these variables contains a space
-KEEPENV="PATH"
-
+# TODO: Phase this out in favor of /etc/conf.d/env_whitelist
+#KEEPENV="PATH"

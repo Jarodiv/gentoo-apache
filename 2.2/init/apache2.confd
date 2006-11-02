@@ -53,6 +53,7 @@ APACHE2_OPTS="-D DEFAULT_VHOST -D LANGUAGE -D INFO"
 # All environment variables are cleared from apache
 # Use this to preserve some of them
 # NOTE!!! It's very important that this contains PATH
+# TODO: Phase this out in favor of /etc/conf.d/env_whitelist
 #KEEPENV="PATH"
 
 # Method to use when reloading the server

@@ -4,9 +4,35 @@
 
 opts="${opts} reload configtest"
 
-# this next comment is important, don't remove it - it has to be somewhere in 
-# the init script to kill off a warning that doesn't apply to us
-# svc_start svc_stop   
+# TODO
+# Remove all the enviroment crap, as it's not needed after baselayout 1.12.0.
+# There are still people using older versions, baselayout 1.12.0 was first
+# stable with 2006.1, so we need to wait some time before doing that.
+clear_env_except() {
+
+	local save_env=$1
+	shift;
+
+	curr_env=$(env | sed 's/=.*//')
+
+	for env_var in ${curr_env}; do
+		local save=0
+		for save_var in ${save_env}; do
+			if [[ "${env_var}" == "${save_var}" ]]; then
+				save=1
+			fi
+		done
+
+		if [[ "${save}" == "0" ]]; then
+			unset_vars="${unset_vars} -u ${env_var}"
+		fi
+	done
+
+	env ${unset_vars} $@
+}
+
+
+
 
 depend() {
 	need net
@@ -40,18 +66,13 @@ checkconfig() {
 	APACHE2_OPTS="${APACHE2_OPTS} -f ${CONFIGFILE}"
 	[ -n "${STARTUPERRORLOG}" ] && APACHE2_OPTS="${APACHE2_OPTS} -E ${STARTUPERRORLOG}"
 
-	# set a sane default for KEEPENV and OLDENV
+	# set a sane default for KEEPENV
 	KEEPENV=${KEEPENV:-PATH}
-	OLDENV=
-
-	for env_var in ${KEEPENV}; do
-		OLDENV="${OLDENV} ${env_var}=\"`printenv ${env_var}`\""
-		SSDENV="${SSDENV} --env ${env_var}=\"`printenv ${env_var}`\""
-	done
 
 	APACHE2="/usr/sbin/apache2"
 	
-	env -i ${OLDENV} ${APACHE2} ${APACHE2_OPTS} -t 1>/dev/null 2>&1
+	# TODO kill the environment crap... see note above
+	clear_env_except "${KEEPENV}" ${APACHE2} ${APACHE2_OPTS} -t 1>/dev/null 2>&1
 	ret=$?
 	if [ $ret -ne 0 ]; then
 		eerror "Apache2 has detected a syntax error in your configuration files:"
@@ -65,7 +86,9 @@ start() {
 	checkconfig || return 1
 	ebegin "Starting apache2"
 	[ -f /var/log/apache2/ssl_scache ] && rm /var/log/apache2/ssl_scache
-	env -i /sbin/start-stop-daemon --start --exec ${APACHE2} --pidfile /var/run/apache2.pid ${SSDENV} -- ${APACHE2_OPTS} -k start
+	
+	# TODO kill the environment crap... see note above
+	clear_env_except "${KEEPENV}" /sbin/start-stop-daemon --start --exec ${APACHE2} --pidfile /var/run/apache2.pid -- ${APACHE2_OPTS} -k start
 	eend $?
 }
 
