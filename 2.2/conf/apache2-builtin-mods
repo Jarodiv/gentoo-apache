@@ -74,8 +74,8 @@ mod_mime shared
 mod_mime_magic shared
 mod_negotiation shared
 mod_proxy shared
-mod_proxy_ajp enabled
-mod_proxy_balancer enabled
+mod_proxy_ajp shared
+mod_proxy_balancer shared
 mod_proxy_connect shared
 mod_proxy_ftp disabled
 mod_proxy_http shared
