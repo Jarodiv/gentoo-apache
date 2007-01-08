@@ -1,0 +1,42 @@
+Index: apache-2.0.x/server/mpm/experimental/peruser/peruser.c
+===================================================================
+--- apache-2.0.x.orig/server/mpm/experimental/peruser/peruser.c
++++ apache-2.0.x/server/mpm/experimental/peruser/peruser.c
+@@ -1494,8 +1494,8 @@ static void child_main(int child_num_arg
+     apr_status_t rv;
+     apr_bucket_alloc_t *bucket_alloc;
+     int fd;
+-    void* sock;
+-    void* pod_sock;
++    apr_socket_t *sock = NULL;
++    apr_socket_t *pod_sock = NULL;
+ 
+     mpm_state = AP_MPMQ_STARTING; /* for benefit of any hooks that run as this
+                                   * child initializes
+@@ -1550,7 +1550,7 @@ static void child_main(int child_num_arg
+             _DBG("%s %d", child_type_string(CHILD_INFO_TABLE[my_child_num].type), my_child_num);
+ 
+             /* -- create new listener to receive from multiplexer -- */
+-            apr_os_sock_put((void*)&sock, &CHILD_INFO_TABLE[my_child_num].senv->input, pconf);
++            apr_os_sock_put(&sock, &CHILD_INFO_TABLE[my_child_num].senv->input, pconf);
+             listen_clear();
+             listen_add(pconf, sock, receive_from_multiplexer);
+ 
+@@ -1563,7 +1563,7 @@ static void child_main(int child_num_arg
+     }
+ 
+     apr_os_file_get(&fd, pipe_of_death_in);
+-    apr_os_sock_put((void*)&pod_sock, &fd, pconf);
++    apr_os_sock_put(&pod_sock, &fd, pconf);
+     listen_add(pconf, pod_sock, check_pipe_of_death);
+ 
+     (peruser_setup_child(my_child_num) && clean_child_exit(APEXIT_CHILDFATAL));
+@@ -1666,7 +1666,7 @@ static void child_main(int child_num_arg
+ 	/* if we accept() something we don't want to die, so we have to
+ 	 * defer the exit
+ 	 */
+-        status = listensocks[offset].accept_func(&sock, &listensocks[offset], ptrans);
++        status = listensocks[offset].accept_func((void *)&sock, &listensocks[offset], ptrans);
+         SAFE_ACCEPT(accept_mutex_off()); 	/* unlock after "accept" */
+ 
+         if (status == APR_EGENERAL) {
