@@ -1,0 +1,361 @@
+#!/bin/bash
+# Copyright 2004,2006 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License v2
+# Author:  Michael Stewart <vericgar@gentoo.org>
+
+MYVERSION='$Revision$'
+MYVERSION=${MYVERSION#* }
+MYVERSION=${MYVERSION% *}
+
+# Defaults:
+CONF=/etc/apache2/suexec-conf
+BINARY=/usr/sbin/suexec2
+DEF_CALLER=apache
+DEF_DOCROOT=/var/www
+DEF_GIDMIN=100
+DEF_LOGFILE=/var/log/apache2/suexec_log
+DEF_SAFEPATH=/usr/local/bin:/usr/bin:/bin
+DEF_USERDIR=public_html
+DEF_UIDMIN=1000
+DEF_UMASK=077
+
+BUILDFILES=/usr/lib/apache2/build
+BUILDDIR=/var/tmp/suexec-rebuild
+
+usage() {
+	cat <<EOF_USAGE
+$0 - Configuration utility for suexec
+Revision ${MYVERSION}
+Usage: $0 action [options] [config_file]
+
+action may be any of:
+ -c --config   (used in ebuilds) output ./configure style configuration
+ -i --info     display current configuration
+ -r --rebuild  rebuild suexec from current configuration
+ -s --set      set configuration
+ -h -? --help  this information
+
+options may be any of:
+    --caller=      user allowed to call suexec (default: ${DEF_CALLER})
+    --docroot=     directory where access is allowed (default: ${DEF_DOCROOT})
+    --gidmin=      lowest groupid allowed as target user (default: ${DEF_GIDMIN})
+    --logfile=     filename of logfile (default: ${DEF_LOGFILE})
+    --safepath=    PATH set by suexec (default: ${DEF_SAFEPATH})
+    --userdir=     user directory where access is allowed (default: ${DEF_USERDIR})
+    --uidmid=      lowest userid allowed as target user (default: ${DEF_UIDMIN})
+    --sumask=      umask set by suexec (default: ${DEF_SUMASK})
+
+    For more information see http://httpd.apache.org/docs/2.2/suexec.html
+
+config_file is the full path to the configuration file to use.
+    It defaults to /etc/apache2/suexec-conf
+	The config_file can be used instead of the --set options.
+
+Recommended command order:
+  suexec-config --info          (check configuration)
+  suexec-config --set [options] (make adjustment to your configuration)
+  suexec-config --info          (display your new options)
+  suexec-config --rebuild       (make new options take effect)
+
+Actions may be combined, and they will be run in the same order they are on the command line, so the following will work:
+
+  suexec-config --info
+  suexec-config --set [options] --info --rebuild
+
+After suexec-config has been configured with your options, they will be used
+every time apache is upgraded.
+
+EOF_USAGE
+
+}
+
+
+
+die() {
+	echo "!!! $@"
+	exit 1
+}
+
+
+
+need_root() {
+	if [ "`id -u`" -ne "0" ]
+	then
+		die "Error: Root access required"
+	fi
+}
+
+
+
+load_config() {
+
+	if [ -f "${CONF}" ]; then
+		. ${CONF}
+	fi
+	
+	CONF_CALLER=${caller}
+	CONF_USERDIR=${userdir}
+	CONF_DOCROOT=${docroot}
+	CONF_UIDMIN=${uidmin}
+	CONF_GIDMIN=${gidmin}
+	CONF_LOGFILE=${logfile}
+	CONF_SAFEPATH=${safepath}
+	CONF_UMASK=${sumask}
+
+}
+
+
+
+collapse_config() {
+	# sets all the OPT_* variables by taking information from:
+	# DEF_* (defaults)
+	# CONF_* (config file) 
+	# CUR_* (current suexec -V if used)
+	# CMD_* (command line)
+	# later variables override earlier variables
+
+	join="DEF CUR CONF CMD"
+	opts="CALLER DOCROOT GIDMIN LOGFILE SAFEPATH USERDIR UIDMIN UMASK"
+
+	for i in ${join}
+	do
+		for j in ${opts}
+		do
+			var=${i}_${j}
+			value=`eval echo \$\{${var}\}`
+			if [ -n "${value}" ]
+			then
+				eval "`echo OPT_${j}`=${value}"
+				newvar=OPT_${j}
+				newval=`eval echo \$\{${newvar}\}`
+			fi
+		done
+	done
+}
+
+
+
+parse_suexec() {
+
+	need_root
+
+	if [ -x "${BINARY}" ]
+	then
+		SUPREV=`${BINARY} -V 2>&1 | sed 's/ -D //g'`
+		CUR_CALLER=`echo "${SUPREV}" | grep AP_HTTPD_USER | sed 's/^.*=//'`
+		CUR_DOCROOT=`echo "${SUPREV}" | grep AP_DOC_ROOT | sed 's/^.*=//'`
+		CUR_GIDMIN=`echo "${SUPREV}" | grep AP_GID_MIN | sed 's/^.*=//'`
+		CUR_LOGFILE=`echo "${SUPREV}" | grep AP_LOG_EXEC | sed 's/^.*=//'`
+		CUR_SAFEPATH=`echo "${SUPREV}" | grep AP_SAFE_PATH | sed 's/^.*=//'`
+		CUR_USERDIR=`echo "${SUPREV}" | grep AP_USERDIR_SUFFIX | sed 's/^.*=//'`
+		CUR_UIDMIN=`echo "${SUPREV}" | grep AP_UID_MIN | sed 's/^.*=//'`
+		CUR_UMASK=`echo "${SUPREV}" | grep AP_SUEXEC_UMASK | sed 's/^.*=//'`
+	fi
+}
+
+
+
+action_conf() {
+	# output ./configure style configuration
+	
+	cat <<EOF_CONF
+--with-suexec-caller=${OPT_CALLER}  
+--with-suexec-docroot=${OPT_DOCROOT} 
+--with-suexec-gidmin=${OPT_GIDMIN} 
+--with-suexec-logfile=${OPT_LOGFILE} 
+--with-suexec-safepath=${OPT_SAFEPATH} 
+--with-suexec-userdir=${OPT_USERDIR} 
+--with-suexec-uidmin=${OPT_UIDMIN} 
+--with-suexec-umask=${OPT_UMASK} 
+EOF_CONF
+
+}
+
+
+
+action_info() {
+	# display current configuration
+
+	parse_suexec
+	collapse_config
+	
+	cat <<EOF_INFO
+Binary                                 :: ${BINARY}
+User allowed to call suexec            :: ${OPT_CALLER}
+Directory where access is allowed      :: ${OPT_DOCROOT}
+Lowest groupid allowed as target user  :: ${OPT_GIDMIN}
+Filename of logfile                    :: ${OPT_LOGFILE}
+PATH set by suexec                     :: ${OPT_SAFEPATH}
+User directory where access is allowed :: ${OPT_USERDIR}
+Lowest userid allowed as target user   :: ${OPT_UIDMIN}
+umask set by suexec                    :: ${OPT_UMASK}
+EOF_INFO
+
+}
+
+
+
+action_rebuild() {
+	# rebuild suexec from current configuration
+
+	need_root	# required for installing suexec
+
+	mkdir -p ${BUILDDIR} || die "mkdir ${BUILDDIR} failed"
+	cd ${BUILDDIR}
+	cp ${BUILDFILES}/suexec.c . || 
+		die "Unable to copy suexec.c - possibly missing?"
+	cp ${BUILDFILES}/Makefile.suexec Makefile || 
+		die "Unable to copy Makefile - possibly missing?"
+	
+	cat > suexec.h <<EOF_SUEXEC_H
+#define AP_HTTPD_USER "${OPT_CALLER}"
+#define AP_UID_MIN ${OPT_UIDMIN}
+#define AP_GID_MIN ${OPT_GIDMIN}
+#define AP_USERDIR_SUFFIX "${OPT_USERDIR}"
+#define AP_LOG_EXEC "${OPT_LOGFILE}"
+#define AP_DOC_ROOT "${OPT_DOCROOT}"
+#define AP_SAFE_PATH "${OPT_SAFEPATH}"
+#define AP_SUEXEC_UMASK ${OPT_UMASK}
+EOF_SUEXEC_H
+
+	make clean || die "Pre-make cleanup failed!"
+	make || die "Make failed!"
+	
+	mv suexec ${BINARY} || die "Install failed!"
+	chown root:apache ${BINARY} || die "chown failed!"
+	chmod 4710 ${BINARY} || dir "chmod failed!"
+
+}
+
+
+
+action_set() {
+	# set configuration
+
+	if [ ! -e "${CONF}" ]
+	then
+		touch ${CONF} || die "Unable to create ${CONF}"
+	fi
+
+	if [ ! -w "${CONF}" ]
+	then
+		die "Unable to write to ${CONF}"
+	fi
+
+	cat > ${CONF} <<EOF_CONF
+# Use this file to configure the options for suexec.
+# Use the documentation at http://httpd.apache.org/docs/2.2/suexec.html
+
+caller=${OPT_CALLER}
+docroot=${OPT_DOCROOT}
+gidmin=${OPT_GIDMIN}
+logfile=${OPT_LOGFILE}
+safepath=${OPT_SAFEPATH}
+userdir=${OPT_USERDIR}
+uidmin=${OPT_UIDMIN}
+sumask=${OPT_UMASK}
+
+EOF_CONF
+
+	echo "Configuration saved to ${CONF}"
+
+}
+
+
+
+# Main code starts here
+
+# Process command line
+while [ $# -gt 0  ]
+do
+	unset OPT VALUE
+	case "$1" in
+		--*)
+			# long options
+			OPT=${1:2}
+			VALUE=${OPT}
+			OPT=${OPT%%=*}
+			VALUE=${VALUE#*=}
+			if [ "${VALUE}" == "${OPT}" ]; then
+				if [ "${2:0:1}" != "-" ]; then
+					VALUE=$2
+					shift;
+				fi
+			fi
+
+			case "${OPT}" in
+				config)		ACTION="${ACTION} conf";;
+				info)		ACTION="${ACTION} info";;
+				rebuild)	ACTION="${ACTION} rebuild";;
+				set)		ACTION="${ACTION} set";;
+				
+				help)		usage; exit;;
+				
+				caller)		CMD_CALLER=${VALUE}; unset VALUE;;
+				docroot)	CMD_DOCROOT=${VALUE}; unset VALUE;;
+				gidmin)		CMD_GIDMIN=${VALUE}; unset VALUE;;
+				logfile)	CMD_LOGFILE=${VALUE}; unset VALUE;;
+				safepath)	CMD_SAFEPATH=${VALUE}; unset VALUE;;
+				userdir)	CMD_USERDIR=${VALUE}; unset VALUE;;
+				uidmin)		CMD_UIDMIN=${VALUE}; unset VALUE;;
+				sumask)		CMD_UMASK=${VALUE}; unset VALUE;;
+				*)
+					usage
+					die "Unknown option: --${OPT}"
+				;;
+			esac
+			shift
+			if [ "x${VALUE}" != "x" ]; then
+				set -- ${VALUE} "$@"
+			fi
+		;;
+		-*)
+			# short options, expand them to be long options
+			OPTLIST=`echo -- $1 | sed 's/^-- -//' | sed 's/\(.\)/\1 /g'`
+			shift
+			for opt in ${OPTLIST}
+			do
+				case "${opt}" in
+					c) ACTION="${ACTION} conf";;
+					i) ACTION="${ACTION} info";;
+					r) ACTION="${ACTION} rebuild";;
+					s) ACTION="${ACTION} set";;
+					h|\?) usage; exit;;
+					*)
+						usage
+						die "Unknown short option: -${opt}"
+					;;
+				esac
+			done
+		;;
+		*)
+			if [ "${CMDLINE_CONF}" != "yes" ]; then
+				CONF=$1
+				CMDLINE_CONF=yes
+			else
+				usage
+				die "Invalid Argument $1 - Configuration file already set to ${CONF}!!"
+			fi
+			shift
+		;;
+	esac
+done
+
+if [ -z "${ACTION}" ]
+then
+	usage
+	die "No action specfied - what do you want to do?"
+fi
+
+load_config
+collapse_config
+
+for i in ${ACTION}
+do
+	action_${i}
+done
+
+exit
+
+
+# vim: ts=4
