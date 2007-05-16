@@ -35,9 +35,6 @@ checkconfig() {
 	APACHE2_OPTS="${APACHE2_OPTS} -f ${CONFIGFILE}"
 	[ -n "${STARTUPERRORLOG}" ] && APACHE2_OPTS="${APACHE2_OPTS} -E ${STARTUPERRORLOG}"
 
-	# set a sane default for KEEPENV and OLDENV
-	KEEPENV=${KEEPENV:-PATH}
-
 	APACHE2="/usr/sbin/apache2"
 
 	${APACHE2} ${APACHE2_OPTS} -t 1>/dev/null 2>&1
