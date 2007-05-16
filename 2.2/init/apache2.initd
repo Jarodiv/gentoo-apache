@@ -4,35 +4,6 @@
 
 opts="configtest fullstatus graceful gracefulstop reload"
 
-# TODO
-# Remove all the enviroment crap, as it's not needed after baselayout 1.12.0.
-# There are still people using older versions, baselayout 1.12.0 was first
-# stable with 2006.1, so we need to wait some time before doing that.
-clear_env_except() {
-
-	local save_env=$1
-	shift;
-
-	curr_env=$(env | sed 's/=.*//')
-
-	for env_var in ${curr_env}; do
-		local save=0
-		for save_var in ${save_env}; do
-			if [[ "${env_var}" == "${save_var}" ]]; then
-				save=1
-			fi
-		done
-
-		if [[ "${save}" == "0" ]]; then
-			unset_vars="${unset_vars} -u ${env_var}"
-		fi
-	done
-
-	env ${unset_vars} $@
-}
-
-
-
 depend() {
 	need net
 	use mysql dns logger netmount postgresql
@@ -69,8 +40,7 @@ checkconfig() {
 
 	APACHE2="/usr/sbin/apache2"
 
-	# TODO kill the environment crap... see note above
-	clear_env_except "${KEEPENV}" ${APACHE2} ${APACHE2_OPTS} -t 1>/dev/null 2>&1
+	${APACHE2} ${APACHE2_OPTS} -t 1>/dev/null 2>&1
 	ret=$?
 	if [ $ret -ne 0 ]; then
 		eerror "Apache2 has detected a syntax error in your configuration files:"
@@ -85,8 +55,7 @@ start() {
 	ebegin "Starting apache2"
 	[ -f /var/log/apache2/ssl_scache ] && rm /var/log/apache2/ssl_scache
 	
-	# TODO kill the environment crap... see note above
-	clear_env_except "${KEEPENV}" start-stop-daemon --start --exec ${APACHE2} --pidfile /var/run/apache2.pid -- ${APACHE2_OPTS} -k start
+	start-stop-daemon --start --exec ${APACHE2} --pidfile /var/run/apache2.pid -- ${APACHE2_OPTS} -k start
 	eend $?
 }
 
