@@ -32,11 +32,9 @@
 # (note: you may need to modify/add a Listen directive in httpd.conf)
 #NaveVirtualHost 1.2.3.4:80
 
-
 # The actual virtual host definition. Note that the *:80 MUST match whatever
 # is set for NameVirtualHost
 <VirtualHost *:80>
-
 	# ServerName and ServerAlias are how the server determines which virtual
 	# host should be used.
 	ServerName example.com
@@ -45,8 +43,6 @@
 	# Note the ServerAlias allows a few simple wildcards. If you want to have
 	# every subdomain of example.com point to the same place you can do this:
 	# ServerAlias *.example.com
-
-
 
 	# DocumentRoot is the location where your files will be stored
 	#
@@ -71,17 +67,13 @@
 
 	# This should match the DocumentRoot above
 	<Directory "/var/www/example.com/htdocs">
-
 		# Some sane defaults - see httpd.conf for details
 		Options Indexes FollowSymLinks
 		AllowOverride None
 
 		Order allow,deny
 		Allow from all
-
 	</Directory>
-
-
 
 	# By default cgi-bin points to the global cgi-bin in /var/www/localhost
 	# If you want site specific executable scripts, then uncomment this section
@@ -105,8 +97,6 @@
 		SuexecUserGroup billybob users
 	</IfDefine>
 
-
-
 	# If you want custom error documents uncomment this section
 	# See /etc/apache2/modules.d/00_error_documents.conf for the file
 	# name to use for the various error types
@@ -122,8 +112,6 @@
 	#		Allow from all
 	#	</Directory>
 	#</IfDefine ERRORDOCS>
-
-
 	
 	# If you want to use custom icons for the website autoindexes,
 	# then uncomment this section.
@@ -135,9 +123,7 @@
 	#	Order allow,deny
 	#	Allow from all
 	#</Directory>
-
 	
 	# Create a logfile for this vhost
 	CustomLog /var/log/apache2/example.com.log combined
-
 </VirtualHost>

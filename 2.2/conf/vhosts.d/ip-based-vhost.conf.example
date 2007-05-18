@@ -56,8 +56,6 @@
 
 	</Directory>
 
-
-
 	# By default cgi-bin points to the global cgi-bin in /var/www/localhost
 	# If you want site specific executable scripts, then uncomment this section
 	#
@@ -80,8 +78,6 @@
 		SuexecUserGroup billybob users
 	</IfDefine>
 
-
-
 	# If you want custom error documents uncomment this section
 	# See /etc/apache2/modules.d/00_error_documents.conf for the file
 	# name to use for the various error types
@@ -97,8 +93,6 @@
 	#		Allow from all
 	#	</Directory>
 	#</IfDefine ERRORDOCS>
-
-
 	
 	# If you want to use custom icons for the website autoindexes,
 	# then uncomment this section.
@@ -111,8 +105,6 @@
 	#	Allow from all
 	#</Directory>
 
-
 	# Create a logfile for this vhost
 	CustomLog /var/log/apache2/example.com.log combined
-
 </VirtualHost>
