@@ -8,7 +8,7 @@
 # disable a module (i.e. not built at all), put 'disabled' next to it.
 #
 # Examples:
-# mod_access shared    ( this would build a DSO )
+# mod_authz_host shared    ( this would build a DSO )
 # mod_actions static   ( this would get compiled statically )
 # mod_alias disabled   ( this module would not be built at all )
 #
