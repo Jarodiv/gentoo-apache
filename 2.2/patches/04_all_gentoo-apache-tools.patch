@@ -1,0 +1,47 @@
+--- a/support/Makefile.in
++++ b/support/Makefile.in
+@@ -3,7 +3,7 @@ DISTCLEAN_TARGETS = apxs apachectl dbmma
+ 
+ CLEAN_TARGETS = suexec
+ 
+-PROGRAMS = htpasswd htdigest rotatelogs logresolve ab checkgid htdbm htcacheclean httxt2dbm
++PROGRAMS = rotatelogs logresolve checkgid htcacheclean httxt2dbm
+ TARGETS  = $(PROGRAMS)
+ 
+ PROGRAM_LDADD        = $(UTIL_LDFLAGS) $(PROGRAM_DEPENDENCIES) $(EXTRA_LIBS) $(AP_LIBS)
+@@ -29,14 +29,6 @@ install:
+ 	    fi ; \
+ 	fi
+ 
+-htpasswd_OBJECTS = htpasswd.lo
+-htpasswd: $(htpasswd_OBJECTS)
+-	$(LINK) $(htpasswd_LTFLAGS) $(htpasswd_OBJECTS) $(PROGRAM_LDADD)
+-
+-htdigest_OBJECTS = htdigest.lo
+-htdigest: $(htdigest_OBJECTS)
+-	$(LINK) $(htdigest_LTFLAGS) $(htdigest_OBJECTS) $(PROGRAM_LDADD)
+-
+ rotatelogs_OBJECTS = rotatelogs.lo
+ rotatelogs: $(rotatelogs_OBJECTS)
+ 	$(LINK) $(rotatelogs_LTFLAGS) $(rotatelogs_OBJECTS) $(PROGRAM_LDADD)
+@@ -45,15 +37,6 @@ logresolve_OBJECTS = logresolve.lo
+ logresolve: $(logresolve_OBJECTS)
+ 	$(LINK) $(logresolve_LTFLAGS) $(logresolve_OBJECTS) $(PROGRAM_LDADD)
+ 
+-htdbm_OBJECTS = htdbm.lo
+-htdbm: $(htdbm_OBJECTS)
+-	$(LINK) $(htdbm_LTFLAGS) $(htdbm_OBJECTS) $(PROGRAM_LDADD)
+-
+-ab_OBJECTS = ab.lo
+-ab_LDADD = $(PROGRAM_LDADD) $(SSL_LIBS)
+-ab: $(ab_OBJECTS)
+-	$(LINK) $(ab_LTFLAGS) $(ab_OBJECTS) $(ab_LDADD)
+-
+ checkgid_OBJECTS = checkgid.lo
+ checkgid: $(checkgid_OBJECTS)
+ 	$(LINK) $(checkgid_LTFLAGS) $(checkgid_OBJECTS) $(PROGRAM_LDADD)
+@@ -69,4 +52,3 @@ htcacheclean: $(htcacheclean_OBJECTS)
+ httxt2dbm_OBJECTS = httxt2dbm.lo
+ httxt2dbm: $(httxt2dbm_OBJECTS)
+ 	$(LINK) $(httxt2dbm_LTFLAGS) $(httxt2dbm_OBJECTS) $(PROGRAM_LDADD)
+-
