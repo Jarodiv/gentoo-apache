@@ -30,7 +30,7 @@
 #
 # Only requests on this IP address on port 80 will be handled by Virtual Hosts
 # (note: you may need to modify/add a Listen directive in httpd.conf)
-#NaveVirtualHost 1.2.3.4:80
+#NameVirtualHost 1.2.3.4:80
 
 # The actual virtual host definition. Note that the *:80 MUST match whatever
 # is set for NameVirtualHost
