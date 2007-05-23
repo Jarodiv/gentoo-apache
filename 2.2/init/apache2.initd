@@ -52,7 +52,7 @@ start() {
 	ebegin "Starting apache2"
 	[ -f /var/log/apache2/ssl_scache ] && rm /var/log/apache2/ssl_scache
 	
-	start-stop-daemon --start --exec ${APACHE2} --pidfile /var/run/apache2.pid -- ${APACHE2_OPTS} -k start
+	start-stop-daemon --start --exec ${APACHE2} -- ${APACHE2_OPTS} -k start
 	eend $?
 }
 
@@ -64,7 +64,6 @@ stop() {
 }
 
 reload() {
-
 	RELOAD_TYPE="${RELOAD_TYPE:-graceful}"
 	
 	checkconfig || return 1
