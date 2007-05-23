@@ -1,11 +1,7 @@
----
- Makefile.in         |    5 ++-
- support/Makefile.in |   72 ----------------------------------------------------
- 2 files changed, 3 insertions(+), 74 deletions(-)
-
---- a/Makefile.in
-+++ b/Makefile.in
-@@ -204,8 +204,9 @@ install-man:
+diff -Nur httpd-2.2.4.orig/Makefile.in httpd-2.2.4/Makefile.in
+--- httpd-2.2.4.orig/Makefile.in	2005-11-13 07:33:15.000000000 +0100
++++ httpd-2.2.4/Makefile.in	2007-05-23 20:46:19.000000000 +0200
+@@ -204,8 +204,9 @@
  	@test -d $(DESTDIR)$(mandir)/man1 || $(MKINSTALLDIRS) $(DESTDIR)$(mandir)/man1
  	@test -d $(DESTDIR)$(mandir)/man8 || $(MKINSTALLDIRS) $(DESTDIR)$(mandir)/man8
  	@test -d $(DESTDIR)$(manualdir)   || $(MKINSTALLDIRS) $(DESTDIR)$(manualdir)
@@ -17,8 +13,9 @@
  	@if test "x$(RSYNC)" != "x" && test -x $(RSYNC) ; then \
  	  $(RSYNC) --exclude .svn -rlpt --numeric-ids $(top_srcdir)/docs/manual/ $(DESTDIR)$(manualdir)/; \
  	else \
---- a/support/Makefile.in
-+++ b/support/Makefile.in
+diff -Nur httpd-2.2.4.orig/support/Makefile.in httpd-2.2.4/support/Makefile.in
+--- httpd-2.2.4.orig/support/Makefile.in	2005-07-07 01:15:34.000000000 +0200
++++ httpd-2.2.4/support/Makefile.in	1970-01-01 01:00:00.000000000 +0100
 @@ -1,72 +0,0 @@
 -DISTCLEAN_TARGETS = apxs apachectl dbmmanage log_server_status \
 -	logresolve.pl phf_abuse_log.cgi split-logfile envvars-std
