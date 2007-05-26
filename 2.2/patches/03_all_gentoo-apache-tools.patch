@@ -1,44 +1,52 @@
---- ../httpd-2.2.4.orig/Makefile.in	2005-11-13 07:33:15.000000000 +0100
-+++ ./Makefile.in	2007-05-23 23:32:09.000000000 +0200
-@@ -204,8 +204,9 @@ install-man:
- 	@test -d $(DESTDIR)$(mandir)/man1 || $(MKINSTALLDIRS) $(DESTDIR)$(mandir)/man1
+--- a/Makefile.in
++++ b/Makefile.in
+@@ -198,14 +198,15 @@ install-include:
+ 	  $(INSTALL_DATA) $$hdr $(DESTDIR)$(includedir); \
+ 	done
+ 
++MAN8=httpd.8 suexec.8
+ install-man:
+ 	@echo Installing man pages and online manual
+ 	@test -d $(DESTDIR)$(mandir)      || $(MKINSTALLDIRS) $(DESTDIR)$(mandir)
+-	@test -d $(DESTDIR)$(mandir)/man1 || $(MKINSTALLDIRS) $(DESTDIR)$(mandir)/man1
  	@test -d $(DESTDIR)$(mandir)/man8 || $(MKINSTALLDIRS) $(DESTDIR)$(mandir)/man8
  	@test -d $(DESTDIR)$(manualdir)   || $(MKINSTALLDIRS) $(DESTDIR)$(manualdir)
 -	@cp -p $(top_srcdir)/docs/man/*.1 $(DESTDIR)$(mandir)/man1
 -	@cp -p $(top_srcdir)/docs/man/*.8 $(DESTDIR)$(mandir)/man8
-+	@cp -p $(top_srcdir)/docs/man/dbmmanage.1 $(DESTDIR)$(mandir)/man1
-+	@cp -p $(top_srcdir)/docs/man/apxs.8 $(DESTDIR)$(mandir)/man8
-+	@cp -p $(top_srcdir)/docs/man/httpd.8 $(DESTDIR)$(mandir)/man8
++	@for i in $(MAN8) ; do \
++		cp -p $(top_srcdir)/docs/man/$$i $(DESTDIR)$(mandir)/man8; \
++	done
  	@if test "x$(RSYNC)" != "x" && test -x $(RSYNC) ; then \
  	  $(RSYNC) --exclude .svn -rlpt --numeric-ids $(top_srcdir)/docs/manual/ $(DESTDIR)$(manualdir)/; \
  	else \
---- ../httpd-2.2.4.orig/support/Makefile.in	2005-07-07 01:15:34.000000000 +0200
-+++ ./support/Makefile.in	1970-01-01 01:00:00.000000000 +0100
-@@ -1,72 +0,0 @@
+--- a/support/Makefile.in
++++ b/support/Makefile.in
+@@ -1,9 +1,4 @@
 -DISTCLEAN_TARGETS = apxs apachectl dbmmanage log_server_status \
 -	logresolve.pl phf_abuse_log.cgi split-logfile envvars-std
 -
 -CLEAN_TARGETS = suexec
 -
 -PROGRAMS = htpasswd htdigest rotatelogs logresolve ab checkgid htdbm htcacheclean httxt2dbm
--TARGETS  = $(PROGRAMS)
--
--PROGRAM_LDADD        = $(UTIL_LDFLAGS) $(PROGRAM_DEPENDENCIES) $(EXTRA_LIBS) $(AP_LIBS)
--PROGRAM_DEPENDENCIES = 
--
--include $(top_builddir)/build/rules.mk
--
--install:
++PROGRAMS = suexec
+ TARGETS  = $(PROGRAMS)
+ 
+ PROGRAM_LDADD        = $(UTIL_LDFLAGS) $(PROGRAM_DEPENDENCIES) $(EXTRA_LIBS) $(AP_LIBS)
+@@ -12,61 +7,14 @@ PROGRAM_DEPENDENCIES = 
+ include $(top_builddir)/build/rules.mk
+ 
+ install:
 -	@test -d $(DESTDIR)$(bindir) || $(MKINSTALLDIRS) $(DESTDIR)$(bindir)
--	@test -d $(DESTDIR)$(sbindir) || $(MKINSTALLDIRS) $(DESTDIR)$(sbindir)
+ 	@test -d $(DESTDIR)$(sbindir) || $(MKINSTALLDIRS) $(DESTDIR)$(sbindir)
 -	@test -d $(DESTDIR)$(libexecdir) || $(MKINSTALLDIRS) $(DESTDIR)$(libexecdir)
 -	@cp -p $(top_builddir)/server/httpd.exp $(DESTDIR)$(libexecdir)
 -	@for i in apxs apachectl dbmmanage; do \
--	    if test -f "$(builddir)/$$i"; then \
--	        cp -p $$i $(DESTDIR)$(sbindir); \
--	        chmod 755 $(DESTDIR)$(sbindir)/$$i; \
--	    fi ; \
--	done
++	@for i in $(PROGRAMS) ; do \
+ 	    if test -f "$(builddir)/$$i"; then \
+ 	        cp -p $$i $(DESTDIR)$(sbindir); \
+ 	        chmod 755 $(DESTDIR)$(sbindir)/$$i; \
+ 	    fi ; \
+ 	done
 -	@if test -f "$(builddir)/envvars-std"; then \
 -	    cp -p envvars-std $(DESTDIR)$(sbindir); \
 -	    if test ! -f $(DESTDIR)$(sbindir)/envvars; then \
@@ -74,9 +82,9 @@
 -checkgid_OBJECTS = checkgid.lo
 -checkgid: $(checkgid_OBJECTS)
 -	$(LINK) $(checkgid_LTFLAGS) $(checkgid_OBJECTS) $(PROGRAM_LDADD)
--
--suexec_OBJECTS = suexec.lo
--suexec: $(suexec_OBJECTS)
+ 
+ suexec_OBJECTS = suexec.lo
+ suexec: $(suexec_OBJECTS)
 -	$(LINK) $(suexec_OBJECTS)
 -
 -htcacheclean_OBJECTS = htcacheclean.lo
@@ -87,3 +95,4 @@
 -httxt2dbm: $(httxt2dbm_OBJECTS)
 -	$(LINK) $(httxt2dbm_LTFLAGS) $(httxt2dbm_OBJECTS) $(PROGRAM_LDADD)
 -
++	$(LINK) -Wl,-z,now $(suexec_OBJECTS)
