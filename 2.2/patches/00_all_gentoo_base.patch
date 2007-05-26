@@ -7,7 +7,7 @@ diff -ur httpd-2.2.0/include/httpd.h httpd-2.2.0.patched/include/httpd.h
  /** The path to the suExec wrapper, can be overridden in Configuration */
  #ifndef SUEXEC_BIN
 -#define SUEXEC_BIN  HTTPD_ROOT "/bin/suexec"
-+#define SUEXEC_BIN  "/usr/sbin/suexec2"
++#define SUEXEC_BIN  "/usr/sbin/suexec"
  #endif
  
  /** The timeout for waiting for messages */
