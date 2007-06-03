@@ -42,7 +42,7 @@
  TARGETS  = $(PROGRAMS)
  
  PROGRAM_LDADD        = $(UTIL_LDFLAGS) $(PROGRAM_DEPENDENCIES) $(EXTRA_LIBS) $(AP_LIBS)
-@@ -14,22 +13,13 @@ LAZYLDFLAGS          = -Wl,-z,now
+@@ -12,22 +11,13 @@ PROGRAM_DEPENDENCIES = 
  include $(top_builddir)/build/rules.mk
  
  install:
