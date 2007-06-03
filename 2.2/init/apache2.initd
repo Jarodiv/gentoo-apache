@@ -1,8 +1,8 @@
 #!/sbin/runscript
-# Copyright 1999-2005 Gentoo Foundation
+# Copyright 1999-2007 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
 
-opts="configtest fullstatus graceful gracefulstop reload"
+opts="configtest fullstatus graceful gracefulstop modules reload"
 
 depend() {
 	need net
@@ -99,6 +99,12 @@ gracefulstop() {
 	# 28 is SIGWINCH
 	start-stop-daemon --stop --signal 28 --exec ${APACHE2} --pidfile /var/run/apache2.pid
 	eend $?
+}
+
+modules() {
+	checkconfig || return 1
+
+	${APACHE2} ${APACHE2_OPTS} -M 2>&1
 }
 
 status() {
