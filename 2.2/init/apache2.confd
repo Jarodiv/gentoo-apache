@@ -18,7 +18,7 @@
 #  SSL        Enables SSL (available if USE=ssl)
 #  SSL_DEFAULT_VHOST   Enables default vhost for SSL (you should enable this
 #                      when you enable SSL unless you know what you are doing)
-#  SUEXEC     Enables running CGI scripts through suexec.
+#  SUEXEC     Enables running CGI scripts (in USERDIR) through suexec.
 #  USERDIR    Enables /~username mapping to /home/username/public_html
 
 APACHE2_OPTS="-D DEFAULT_VHOST -D LANGUAGE -D INFO"
