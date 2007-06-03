@@ -1,6 +1,10 @@
---- httpd-2.0.51/modules/ssl/Makefile.in.orig	2004-05-26 10:50:53.152391390 +0100
-+++ httpd-2.0.51/modules/ssl/Makefile.in		2004-05-26 10:51:31.164735393 +0100
-@@ -57,10 +57,6 @@
+---
+ modules/ssl/Makefile.in |    4 ----
+ 1 file changed, 4 deletions(-)
+
+--- a/modules/ssl/Makefile.in
++++ b/modules/ssl/Makefile.in
+@@ -24,10 +24,6 @@ include $(top_srcdir)/build/special.mk
  #   (we really don't expect end users to use these targets!)
  #
  

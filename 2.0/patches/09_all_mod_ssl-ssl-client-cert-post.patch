@@ -1,8 +1,25 @@
-Index: modules/ssl/ssl_engine_io.c
-===================================================================
---- modules/ssl/ssl_engine_io.c	(revision 291000)
-+++ modules/ssl/ssl_engine_io.c	(working copy)
-@@ -880,6 +880,7 @@
+---
+ modules/ssl/mod_ssl.h           |    4 
+ modules/ssl/ssl_engine_io.c     |  185 ++++++++++++++++++++++++++++++++++++++++
+ modules/ssl/ssl_engine_kernel.c |   96 ++++++--------------
+ 3 files changed, 218 insertions(+), 67 deletions(-)
+
+--- a/modules/ssl/mod_ssl.h
++++ b/modules/ssl/mod_ssl.h
+@@ -682,6 +682,10 @@ void         ssl_io_filter_init(conn_rec
+ void         ssl_io_filter_register(apr_pool_t *);
+ long         ssl_io_data_cb(BIO *, int, MODSSL_BIO_CB_ARG_TYPE *, int, long, long);
+ 
++/* ssl_io_buffer_fill fills the setaside buffering of the HTTP request
++  * to allow an SSL renegotiation to take place. */
++int          ssl_io_buffer_fill(request_rec *r);
++
+ /*  PRNG  */
+ int          ssl_rand_seed(server_rec *, apr_pool_t *, ssl_rsctx_t, char *);
+ 
+--- a/modules/ssl/ssl_engine_io.c
++++ b/modules/ssl/ssl_engine_io.c
+@@ -880,6 +880,7 @@ static apr_status_t ssl_io_filter_error(
  }
  
  static const char ssl_io_filter[] = "SSL/TLS Filter";
@@ -10,7 +27,7 @@ Index: modules/ssl/ssl_engine_io.c
  
  /*
   *  Close the SSL part of the socket connection
-@@ -1373,6 +1374,187 @@
+@@ -1373,6 +1374,187 @@ static apr_status_t ssl_io_filter_output
      return status;
  }
  
@@ -198,7 +215,7 @@ Index: modules/ssl/ssl_engine_io.c
  static void ssl_io_input_add_filter(ssl_filter_ctx_t *filter_ctx, conn_rec *c,
                                      SSL *ssl)
  {
-@@ -1429,6 +1611,9 @@
+@@ -1430,6 +1612,9 @@ void ssl_io_filter_register(apr_pool_t *
  {
      ap_register_input_filter  (ssl_io_filter, ssl_io_filter_input,  NULL, AP_FTYPE_CONNECTION + 5);
      ap_register_output_filter (ssl_io_filter, ssl_io_filter_output, NULL, AP_FTYPE_CONNECTION + 5);
@@ -208,11 +225,9 @@ Index: modules/ssl/ssl_engine_io.c
      return;
  }
  
-Index: modules/ssl/ssl_engine_kernel.c
-===================================================================
---- modules/ssl/ssl_engine_kernel.c	(revision 291000)
-+++ modules/ssl/ssl_engine_kernel.c	(working copy)
-@@ -490,73 +490,35 @@
+--- a/modules/ssl/ssl_engine_kernel.c
++++ b/modules/ssl/ssl_engine_kernel.c
+@@ -483,73 +483,35 @@ int ssl_hook_Access(request_rec *r)
      }
  #endif /* HAVE_SSL_SET_CERT_STORE */
  
@@ -275,6 +290,14 @@ Index: modules/ssl/ssl_engine_kernel.c
 -     * and is fully transparent to Apache modules.
 -     *
 -     * !! BUT ALL THIS IS STILL NOT RE-IMPLEMENTED FOR APACHE 2.0 !!
+-     */
+-    if (renegotiate && !renegotiate_quick && (r->method_number == M_POST)) {
+-        ap_log_error(APLOG_MARK, APLOG_ERR, 0, r->server,
+-                     "SSL Re-negotiation in conjunction "
+-                     "with POST method not supported! "
+-                     "hint: try SSLOptions +OptRenegotiate");
+-
+-        return HTTP_METHOD_NOT_ALLOWED;
 +    /* If a renegotiation is now required for this location, and the
 +     * request includes a message body (and the client has not
 +     * requested a "100 Continue" response), then the client will be
@@ -287,20 +310,14 @@ Index: modules/ssl/ssl_engine_kernel.c
 +     * To allow authentication to complete in this auth hook, the
 +     * solution used here is to fill a (bounded) buffer with the
 +     * request body, and then to reinject that request body later.
-      */
--    if (renegotiate && !renegotiate_quick && (r->method_number == M_POST)) {
--        ap_log_error(APLOG_MARK, APLOG_ERR, 0, r->server,
--                     "SSL Re-negotiation in conjunction "
--                     "with POST method not supported! "
--                     "hint: try SSLOptions +OptRenegotiate");
++     */
 +    if (renegotiate && !renegotiate_quick
 +        && (apr_table_get(r->headers_in, "transfer-encoding")
 +            || (apr_table_get(r->headers_in, "content-length")
 +                && strcmp(apr_table_get(r->headers_in, "content-length"), "0")))
 +        && !r->expecting_100) {
 +        int rv;
- 
--        return HTTP_METHOD_NOT_ALLOWED;
++
 +        /* Fill the I/O buffer with the request body if possible. */
 +        rv = ssl_io_buffer_fill(r);
 +
@@ -313,18 +330,3 @@ Index: modules/ssl/ssl_engine_kernel.c
      }
  
      /*
-Index: modules/ssl/mod_ssl.h
-===================================================================
---- modules/ssl/mod_ssl.h	(revision 291000)
-+++ modules/ssl/mod_ssl.h	(working copy)
-@@ -683,6 +683,10 @@
- void         ssl_io_filter_register(apr_pool_t *);
- long         ssl_io_data_cb(BIO *, int, MODSSL_BIO_CB_ARG_TYPE *, int, long, long);
- 
-+/* ssl_io_buffer_fill fills the setaside buffering of the HTTP request
-+  * to allow an SSL renegotiation to take place. */
-+int          ssl_io_buffer_fill(request_rec *r);
-+
- /*  PRNG  */
- int          ssl_rand_seed(server_rec *, apr_pool_t *, ssl_rsctx_t, char *);
- 

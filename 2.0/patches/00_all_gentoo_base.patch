@@ -1,7 +1,27 @@
-diff -Nup -Nrup httpd-2.0.52.orig/include/httpd.h httpd-2.0.52.patched/include/httpd.h
---- httpd-2.0.52.orig/include/httpd.h	2004-08-12 06:22:52.000000000 +0100
-+++ httpd-2.0.52.patched/include/httpd.h	2005-02-18 02:34:22.000000000 +0000
-@@ -137,7 +137,7 @@ extern "C" {
+---
+ Makefile.in                    |    2 +-
+ include/httpd.h                |    2 +-
+ modules/ssl/ssl_engine_mutex.c |    2 ++
+ server/Makefile.in             |    3 +++
+ server/core.c                  |    2 +-
+ support/apachectl.in           |   22 +++++++++++++++++++---
+ support/apxs.in                |   13 -------------
+ 7 files changed, 27 insertions(+), 19 deletions(-)
+
+--- a/Makefile.in
++++ b/Makefile.in
+@@ -14,7 +14,7 @@ PROGRAM_DEPENDENCIES = \
+ PROGRAMS        = $(PROGRAM_NAME)
+ TARGETS         = $(PROGRAMS) $(shared_build) $(other_targets)
+ PHONY_TARGETS   = $(srcdir)/buildmark.c
+-INSTALL_TARGETS = install-conf install-htdocs install-error install-icons \
++INSTALL_TARGETS = install-htdocs install-error install-icons \
+ 	install-other install-cgi install-include install-suexec install-man \
+ 	install-build
+ 
+--- a/include/httpd.h
++++ b/include/httpd.h
+@@ -138,7 +138,7 @@ extern "C" {
  
  /* The path to the suExec wrapper, can be overridden in Configuration */
  #ifndef SUEXEC_BIN
@@ -10,10 +30,9 @@ diff -Nup -Nrup httpd-2.0.52.orig/include/httpd.h httpd-2.0.52.patched/include/h
  #endif
  
  /* The timeout for waiting for messages */
-diff -Nup -Nrup httpd-2.0.52.orig/modules/ssl/ssl_engine_mutex.c httpd-2.0.52.patched/modules/ssl/ssl_engine_mutex.c
---- httpd-2.0.52.orig/modules/ssl/ssl_engine_mutex.c	2004-02-09 20:53:20.000000000 +0000
-+++ httpd-2.0.52.patched/modules/ssl/ssl_engine_mutex.c	2005-02-18 02:34:22.000000000 +0000
-@@ -41,6 +41,8 @@ int ssl_mutex_init(server_rec *s, apr_po
+--- a/modules/ssl/ssl_engine_mutex.c
++++ b/modules/ssl/ssl_engine_mutex.c
+@@ -42,6 +42,8 @@ int ssl_mutex_init(server_rec *s, apr_po
      if (mc->nMutexMode == SSL_MUTEXMODE_NONE) 
          return TRUE;
  
@@ -22,22 +41,9 @@ diff -Nup -Nrup httpd-2.0.52.orig/modules/ssl/ssl_engine_mutex.c httpd-2.0.52.pa
      if ((rv = apr_global_mutex_create(&mc->pMutex, mc->szMutexFile,
                                  mc->nMutexMech, p)) != APR_SUCCESS) {
          if (mc->szMutexFile)
-diff -Nup -Nrup httpd-2.0.52.orig/server/core.c httpd-2.0.52.patched/server/core.c
---- httpd-2.0.52.orig/server/core.c	2004-09-21 14:21:16.000000000 +0100
-+++ httpd-2.0.52.patched/server/core.c	2005-02-18 02:34:22.000000000 +0000
-@@ -2489,7 +2489,7 @@ static void ap_set_version(apr_pool_t *p
-         ap_add_version_component(pconf, AP_SERVER_BASEPRODUCT "/" AP_SERVER_MAJORVERSION);
-     }
-     else {
--        ap_add_version_component(pconf, AP_SERVER_BASEVERSION " (" PLATFORM ")");
-+        ap_add_version_component(pconf, AP_SERVER_BASEVERSION " (Gentoo)");
-     }
- 
-     /*
-diff -Nup -Nrup httpd-2.0.52.orig/server/Makefile.in httpd-2.0.52.patched/server/Makefile.in
---- httpd-2.0.52.orig/server/Makefile.in	2004-03-08 17:40:37.000000000 +0000
-+++ httpd-2.0.52.patched/server/Makefile.in	2005-02-18 02:34:22.000000000 +0000
-@@ -67,6 +67,9 @@ exports.c: export_files
+--- a/server/Makefile.in
++++ b/server/Makefile.in
+@@ -71,6 +71,9 @@ exports.c: export_files
  export_vars.h: export_files
  	$(AWK) -f $(top_srcdir)/build/make_var_export.awk `cat $?` > $@
  
@@ -47,10 +53,20 @@ diff -Nup -Nrup httpd-2.0.52.orig/server/Makefile.in httpd-2.0.52.patched/server
  # Rule to make def file for OS/2 core dll
  ApacheCoreOS2.def: exports.c export_vars.h $(top_srcdir)/os/$(OS_DIR)/core_header.def
  	cat $(top_srcdir)/os/$(OS_DIR)/core_header.def > $@
-diff -Nup -Nrup httpd-2.0.52.orig/support/apachectl.in httpd-2.0.52.patched/support/apachectl.in
---- httpd-2.0.52.orig/support/apachectl.in	2004-08-23 16:07:18.000000000 +0100
-+++ httpd-2.0.52.patched/support/apachectl.in	2005-02-18 02:43:59.000000000 +0000
-@@ -40,17 +40,25 @@ ARGV="$@"
+--- a/server/core.c
++++ b/server/core.c
+@@ -2504,7 +2504,7 @@ static void ap_set_version(apr_pool_t *p
+         ap_add_version_component(pconf, AP_SERVER_BASEPRODUCT "/" AP_SERVER_MAJORVERSION);
+     }
+     else {
+-        ap_add_version_component(pconf, AP_SERVER_BASEVERSION " (" PLATFORM ")");
++        ap_add_version_component(pconf, AP_SERVER_BASEVERSION " (Gentoo)");
+     }
+ 
+     /*
+--- a/support/apachectl.in
++++ b/support/apachectl.in
+@@ -41,17 +41,25 @@ ARGV="$@"
  # --------------------                              --------------------
  # 
  # the path to your httpd binary, including options if necessary
@@ -79,7 +95,7 @@ diff -Nup -Nrup httpd-2.0.52.orig/support/apachectl.in httpd-2.0.52.patched/supp
  #
  # the URL to your server's mod_status status page.  If you do not
  # have one, then status and fullstatus will not work.
-@@ -74,6 +82,14 @@ if [ "x$ARGV" = "x" ] ; then 
+@@ -75,6 +83,14 @@ if [ "x$ARGV" = "x" ] ; then 
      ARGV="-h"
  fi
  
@@ -94,10 +110,9 @@ diff -Nup -Nrup httpd-2.0.52.orig/support/apachectl.in httpd-2.0.52.patched/supp
  case $ARGV in
  start|stop|restart|graceful)
      $HTTPD -k $ARGV
-diff -Nup -Nrup httpd-2.0.52.orig/support/apxs.in httpd-2.0.52.patched/support/apxs.in
---- httpd-2.0.52.orig/support/apxs.in	2004-02-09 20:59:49.000000000 +0000
-+++ httpd-2.0.52.patched/support/apxs.in	2005-02-18 02:34:22.000000000 +0000
-@@ -198,19 +198,6 @@ if ($0 =~ m:support/apxs$:) {
+--- a/support/apxs.in
++++ b/support/apxs.in
+@@ -199,19 +199,6 @@ if ($0 =~ m:support/apxs$:) {
      ($httpd = $0) =~ s:support/apxs$::;
  }
  

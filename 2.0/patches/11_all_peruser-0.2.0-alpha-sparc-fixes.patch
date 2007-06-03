@@ -1,7 +1,9 @@
-Index: apache-2.0.x/server/mpm/experimental/peruser/peruser.c
-===================================================================
---- apache-2.0.x.orig/server/mpm/experimental/peruser/peruser.c
-+++ apache-2.0.x/server/mpm/experimental/peruser/peruser.c
+---
+ server/mpm/experimental/peruser/peruser.c |   10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
+
+--- a/server/mpm/experimental/peruser/peruser.c
++++ b/server/mpm/experimental/peruser/peruser.c
 @@ -1494,8 +1494,8 @@ static void child_main(int child_num_arg
      apr_status_t rv;
      apr_bucket_alloc_t *bucket_alloc;

@@ -1,6 +1,11 @@
---- srclib/apr-util/buildconf.orig	2006-11-11 20:20:40.000000000 -0500
-+++ srclib/apr-util/buildconf	2006-11-11 20:21:07.000000000 -0500
-@@ -8,7 +8,7 @@
+---
+ buildconf                 |    2 +-
+ srclib/apr-util/buildconf |    2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+--- a/buildconf
++++ b/buildconf
+@@ -29,7 +29,7 @@ while test $# -gt 0 
  do
    # Normalize
    case "$1" in
@@ -9,9 +14,9 @@
    *) optarg= ;;
    esac
  
---- buildconf.orig	2006-11-11 20:20:36.000000000 -0500
-+++ buildconf	2006-11-11 20:21:21.000000000 -0500
-@@ -29,7 +29,7 @@
+--- a/srclib/apr-util/buildconf
++++ b/srclib/apr-util/buildconf
+@@ -8,7 +8,7 @@ while test $# -gt 0 
  do
    # Normalize
    case "$1" in

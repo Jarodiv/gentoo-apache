@@ -1,7 +1,11 @@
-diff -ru httpd-2.0.52/modules/mappers/mod_rewrite.c httpd-2.0.52.ampescape/modules/mappers/mod_rewrite.c
---- httpd-2.0.52/modules/mappers/mod_rewrite.c	2004-08-27 21:23:26.000000000 +0200
-+++ httpd-2.0.52.ampescape/modules/mappers/mod_rewrite.c	2004-11-19 19:04:17.190398544 +0100
-@@ -964,6 +964,7 @@
+---
+ modules/mappers/mod_rewrite.c |   24 ++++++++++++++++++++++++
+ modules/mappers/mod_rewrite.h |    1 +
+ 2 files changed, 25 insertions(+)
+
+--- a/modules/mappers/mod_rewrite.c
++++ b/modules/mappers/mod_rewrite.c
+@@ -965,6 +965,7 @@ static int pre_config(apr_pool_t *pconf,
          map_pfn_register("tolower", rewrite_mapfunc_tolower);
          map_pfn_register("toupper", rewrite_mapfunc_toupper);
          map_pfn_register("escape", rewrite_mapfunc_escape);
@@ -9,7 +13,7 @@ diff -ru httpd-2.0.52/modules/mappers/mod_rewrite.c httpd-2.0.52.ampescape/modul
          map_pfn_register("unescape", rewrite_mapfunc_unescape);
      }
      return OK;
-@@ -3346,6 +3347,29 @@
+@@ -3356,6 +3357,29 @@ static char *rewrite_mapfunc_escape(requ
      return value;
  }
  
@@ -39,10 +43,9 @@ diff -ru httpd-2.0.52/modules/mappers/mod_rewrite.c httpd-2.0.52.ampescape/modul
  static char *rewrite_mapfunc_unescape(request_rec *r, char *key)
  {
      char *value;
-diff -ru httpd-2.0.52/modules/mappers/mod_rewrite.h httpd-2.0.52.ampescape/modules/mappers/mod_rewrite.h
---- httpd-2.0.52/modules/mappers/mod_rewrite.h	2004-08-20 23:17:41.000000000 +0200
-+++ httpd-2.0.52.ampescape/modules/mappers/mod_rewrite.h	2004-11-19 18:29:50.000000000 +0100
-@@ -389,6 +389,7 @@
+--- a/modules/mappers/mod_rewrite.h
++++ b/modules/mappers/mod_rewrite.h
+@@ -390,6 +390,7 @@ APR_DECLARE_OPTIONAL_FN(void, ap_registe
  static char *rewrite_mapfunc_toupper(request_rec *r, char *key);
  static char *rewrite_mapfunc_tolower(request_rec *r, char *key);
  static char *rewrite_mapfunc_escape(request_rec *r, char *key);

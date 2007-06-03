@@ -2,9 +2,13 @@
 Set SIGXFSZ to be ignored, so a write() beyond 2gb will fail with
 E2BIG rather than killing the process
 
---- httpd-2.0.51/server/mpm/prefork/prefork.c.xfsz	Wed Jul 17 22:39:55 2002
-+++ httpd-2.0.51/server/mpm/prefork/prefork.c	Mon Aug 26 15:40:24 2002
-@@ -461,7 +461,7 @@
+---
+ server/mpm/prefork/prefork.c |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/server/mpm/prefork/prefork.c
++++ b/server/mpm/prefork/prefork.c
+@@ -382,7 +382,7 @@ static void set_signals(void)
  	ap_log_error(APLOG_MARK, APLOG_WARNING, errno, ap_server_conf, "sigaction(SIGXCPU)");
  #endif
  #ifdef SIGXFSZ

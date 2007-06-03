@@ -1,6 +1,9 @@
-diff -Nurp httpd-2.0.58.orig/support/ab.c httpd-2.0.58/support/ab.c
---- httpd-2.0.58.orig/support/ab.c	2006-06-06 12:10:03.431121000 +0200
-+++ httpd-2.0.58/support/ab.c	2006-06-06 12:10:27.744640500 +0200
+---
+ support/ab.c |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/support/ab.c
++++ b/support/ab.c
 @@ -2057,7 +2057,7 @@ int main(int argc, const char * const ar
  	    strcpy(content_type, optarg);
  	    break;
