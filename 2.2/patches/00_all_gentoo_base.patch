@@ -1,8 +1,25 @@
 Customizations for Gentoo
-diff -ur httpd-2.2.0/include/httpd.h httpd-2.2.0.patched/include/httpd.h
---- httpd-2.2.0/include/httpd.h	2005-09-29 13:44:53.000000000 -0700
-+++ httpd-2.2.0.patched/include/httpd.h	2006-02-04 13:03:05.000000000 -0800
-@@ -155,7 +155,7 @@
+---
+ Makefile.in     |    2 +-
+ include/httpd.h |    2 +-
+ server/core.c   |    2 +-
+ support/apxs.in |   11 -----------
+ 4 files changed, 3 insertions(+), 14 deletions(-)
+
+--- a/Makefile.in
++++ b/Makefile.in
+@@ -14,7 +14,7 @@ PROGRAM_DEPENDENCIES = \
+ 
+ PROGRAMS        = $(PROGRAM_NAME)
+ TARGETS         = $(PROGRAMS) $(shared_build) $(other_targets)
+-INSTALL_TARGETS = install-conf install-htdocs install-error install-icons \
++INSTALL_TARGETS = install-htdocs install-error install-icons \
+ 	install-other install-cgi install-include install-suexec install-build \
+ 	install-man
+ 
+--- a/include/httpd.h
++++ b/include/httpd.h
+@@ -155,7 +155,7 @@ extern "C" {
  
  /** The path to the suExec wrapper, can be overridden in Configuration */
  #ifndef SUEXEC_BIN
@@ -11,10 +28,9 @@ diff -ur httpd-2.2.0/include/httpd.h httpd-2.2.0.patched/include/httpd.h
  #endif
  
  /** The timeout for waiting for messages */
-diff -ur httpd-2.2.0/server/core.c httpd-2.2.0.patched/server/core.c
---- httpd-2.2.0/server/core.c	2005-11-15 11:39:15.000000000 -0800
-+++ httpd-2.2.0.patched/server/core.c	2006-02-04 13:07:40.000000000 -0800
-@@ -2756,7 +2756,7 @@
+--- a/server/core.c
++++ b/server/core.c
+@@ -2794,7 +2794,7 @@ static void set_banner(apr_pool_t *pconf
          ap_add_version_component(pconf, AP_SERVER_BASEPRODUCT "/" AP_SERVER_MAJORVERSION);
      }
      else {
@@ -23,10 +39,9 @@ diff -ur httpd-2.2.0/server/core.c httpd-2.2.0.patched/server/core.c
      }
  
      /*
-diff -ru httpd-2.2.0/support/apxs.in httpd-2.2.0.patched/support/apxs.in
---- httpd-2.2.0/support/apxs.in	2005-06-10 02:18:14.000000000 -0700
-+++ httpd-2.2.0.patched/support/apxs.in	2006-02-14 21:17:47.000000000 -0800
-@@ -190,9 +190,6 @@
+--- a/support/apxs.in
++++ b/support/apxs.in
+@@ -190,9 +190,6 @@ if (@opt_S) {
  my $httpd = get_vars("sbindir") . "/" . get_vars("progname");
  $httpd = eval qq("$httpd");
  $httpd = eval qq("$httpd");
@@ -36,7 +51,7 @@ diff -ru httpd-2.2.0/support/apxs.in httpd-2.2.0.patched/support/apxs.in
  
  #allow apxs to be run from the source tree, before installation
  if ($0 =~ m:support/apxs$:) {
-@@ -204,14 +201,6 @@
+@@ -204,14 +201,6 @@ unless (-x "$httpd") {
  	exit 1;
  }
  
