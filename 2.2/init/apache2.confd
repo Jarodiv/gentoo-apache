@@ -9,7 +9,7 @@
 #  DEFAULT_VHOST   Enables name-based virtual hosts, with the default
 #                  virtual host being in /var/www/localhost/htdocs
 #  ERRORDOCS  Enables default error documents for many languages.
-#  INFO       Enables mod_info, a useful module for debugging [DEFUALT]
+#  INFO       Enables mod_info, a useful module for debugging [DEFAULT]
 #  LANGUAGE   Enables content-negotiation based on language and charset.
 #  LDAP       Enables mod_ldap (available if USE=ldap)
 #  AUTH_LDAP  Enables authentication through mod_ldap (available if USE=ldap)
