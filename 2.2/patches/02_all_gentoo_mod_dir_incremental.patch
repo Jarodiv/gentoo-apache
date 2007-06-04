@@ -1,6 +1,6 @@
-diff -ur httpd-2.0.55.orig/modules/mappers/mod_dir.c httpd-2.0.55/modules/mappers/mod_dir.c
---- httpd-2.0.55.orig/modules/mappers/mod_dir.c	2005-02-04 12:21:18.000000000 -0800
-+++ httpd-2.0.55/modules/mappers/mod_dir.c	2006-03-31 17:56:16.000000000 -0800
+diff -ur httpd-2.0.58.orig/modules/mappers/mod_dir.c httpd-2.0.58/modules/mappers/mod_dir.c
+--- httpd-2.0.58.orig/modules/mappers/mod_dir.c	2007-03-31 19:36:23.000000000 -0400
++++ httpd-2.0.58/modules/mappers/mod_dir.c	2007-03-31 19:39:22.000000000 -0400
 @@ -39,6 +39,7 @@
  
  typedef struct dir_config_struct {
@@ -9,12 +9,18 @@ diff -ur httpd-2.0.55.orig/modules/mappers/mod_dir.c httpd-2.0.55/modules/mapper
      slash_cfg do_slash;
  } dir_config_rec;
  
-@@ -55,6 +56,17 @@
+@@ -55,6 +56,23 @@
      return NULL;
  }
  
 +static const char *add_index_incr(cmd_parms *cmd, void *dummy, const char *arg)
 +{
++    const char *err = ap_check_cmd_context(cmd, GLOBAL_ONLY);
++
++    if (err != NULL) {
++        return err;
++    }
++
 +    dir_config_rec *d = dummy;
 +
 +    if (!d->index_names_incr) {
@@ -27,16 +33,16 @@ diff -ur httpd-2.0.55.orig/modules/mappers/mod_dir.c httpd-2.0.55/modules/mapper
  static const char *configure_slash(cmd_parms *cmd, void *d_, int arg)
  {
      dir_config_rec *d = d_;
-@@ -67,6 +79,8 @@
+@@ -67,6 +85,8 @@
  {
      AP_INIT_ITERATE("DirectoryIndex", add_index, NULL, DIR_CMD_PERMS,
                      "a list of file names"),
-+    AP_INIT_ITERATE("AddDirectoryIndex", add_index_incr, NULL, DIR_CMD_PERMS,
++    AP_INIT_ITERATE("AddDirectoryIndex", add_index_incr, NULL, RSRC_CONF,
 +                    "a list of file names"),
      AP_INIT_FLAG("DirectorySlash", configure_slash, NULL, DIR_CMD_PERMS,
                   "On or Off"),
      {NULL}
-@@ -77,6 +91,7 @@
+@@ -77,6 +97,7 @@
      dir_config_rec *new = apr_pcalloc(p, sizeof(dir_config_rec));
  
      new->index_names = NULL;
@@ -44,7 +50,7 @@ diff -ur httpd-2.0.55.orig/modules/mappers/mod_dir.c httpd-2.0.55/modules/mapper
      new->do_slash = SLASH_UNSET;
      return (void *) new;
  }
-@@ -87,7 +102,26 @@
+@@ -87,7 +108,26 @@
      dir_config_rec *base = (dir_config_rec *)basev;
      dir_config_rec *add = (dir_config_rec *)addv;
  
@@ -72,7 +78,7 @@ diff -ur httpd-2.0.55.orig/modules/mappers/mod_dir.c httpd-2.0.55/modules/mapper
      new->do_slash =
          (add->do_slash == SLASH_UNSET) ? base->do_slash : add->do_slash;
      return new;
-@@ -155,6 +189,14 @@
+@@ -155,6 +195,14 @@
          return DECLINED;
      }
  
