@@ -127,3 +127,5 @@
 	# Create a logfile for this vhost
 	CustomLog /var/log/apache2/example.com.log combined
 </VirtualHost>
+
+# vim: ts=4
