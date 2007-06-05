@@ -37,17 +37,13 @@
 
 	# This should match the DocumentRoot above
 	<Directory "/var/www/example.com/htdocs-secure">
-
 		# Some sane defaults - see httpd.conf for details
 		Options Indexes FollowSymLinks
 		AllowOverride None
 
 		Order allow,deny
 		Allow from all
-
 	</Directory>
-
-
 
 	# By default cgi-bin points to the global cgi-bin in /var/www/localhost
 	# If you want site specific executable scripts, then uncomment this section
@@ -70,8 +66,6 @@
 	<IfDefine SUEXEC>
 		SuexecUserGroup billybob users
 	</IfDefine>
-
-
 
 	# If you want custom error documents uncomment this section
 	# See /etc/apache2/modules.d/00_error_documents.conf for the file
@@ -102,7 +96,6 @@
 	#	Allow from all
 	#</Directory>
 
-
 	# Create a logfile for this vhost
 	CustomLog /var/log/apache2/example.com.ssl_log combined
 	
@@ -112,10 +105,7 @@
 	# You will need a seperate key and certificate for every vhost
 	SSLCertificateFile /etc/apache2/ssl/example.com.crt
 	SSLCertificateKeyFile /etc/apache2/ssl/example.com.key
-
 </VirtualHost>
-
-
 
 # If you want to force SSL for a virtualhost, you can uncomment this section
 
@@ -126,7 +116,6 @@
 # You can optionally use the IP address here instead, if you want every
 # connection to this IP address to be forced to SSL
 #<VirtualHost *:80>
-
 	# Match the ServerName from above
 #	ServerName example.com
 
@@ -134,7 +123,6 @@
 #	ServerAlias www.example.com
 
 #	Redirect permanent / https://example.com/
-
 #</Virtualhost>
 
-# vim: ts=4
+# vim: ts=4 filetype=apache
