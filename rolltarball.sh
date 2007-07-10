@@ -433,7 +433,7 @@ build_tarball() {
 		echo "Packaged by ${G_USER}" >> ${TB_DIR}/DATESTAMP
 		echo "$0 v${MYVERSION}" >> ${TB_DIR}/DATESTAMP
 		edebug "Create bzip2-ed tarball ${TB} from ${TB_DIR} excluding .svn"
-		tar --create --bzip2 --verbose --exclude=.svn --file ${TB} ${TB_DIR} >&9
+		tar --create --bzip2 --verbose --exclude=.svn --exclude=*~ --file ${TB} ${TB_DIR} >&9
 		eend $? "Tarball creation failed" || die
 		edebug "Remove temporary directory" 
 		rm -rf ${TB_DIR} || ewarn "Couldn't clean up, manually remove ${TB_DIR}/"
