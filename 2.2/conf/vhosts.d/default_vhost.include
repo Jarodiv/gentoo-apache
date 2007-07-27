@@ -36,7 +36,7 @@ DocumentRoot "/var/www/localhost/htdocs"
 	# AllowOverride controls what directives may be placed in .htaccess files.
 	# It can be "All", "None", or any combination of the keywords:
 	#   Options FileInfo AuthConfig Limit
-	AllowOverride None
+	AllowOverride All
 
 	# Controls who can get stuff from this server.
 	Order allow,deny
