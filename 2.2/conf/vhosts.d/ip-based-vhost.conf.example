@@ -40,7 +40,6 @@
 	#
 	# Note that if you put the directory anywhere other then under /var/www
 	# you may run into problems with suexec and cgi scripts.
-	# You can reconfigure this path by running suexec2-config
 	#
 	DocumentRoot "/var/www/example.com/htdocs"
 
