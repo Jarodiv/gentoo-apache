@@ -16,7 +16,7 @@ ServerAdmin root@localhost
 # symbolic links and aliases may be used to point to other locations.
 #
 # If you change this to something that isn't under /var/www then suexec
-# will no longer work. See /etc/apache2/suexec-conf for more details.
+# will no longer work.
 DocumentRoot "/var/www/localhost/htdocs"
 
 # This should be changed to whatever you set DocumentRoot to.
