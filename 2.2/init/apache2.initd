@@ -17,20 +17,19 @@ configtest() {
 }
 
 checkconfig() {
-
 	SERVERROOT="${SERVERROOT:-/usr/lib/apache2}"
 	if [ ! -d ${SERVERROOT} ]; then
 		eerror "SERVERROOT does not exist: ${SERVERROOT}"
 		return 1
 	fi
-	
+
 	CONFIGFILE="${CONFIGFILE:-/etc/apache2/httpd.conf}"
 	[ "${CONFIGFILE#/}" = "${CONFIGFILE}" ] && CONFIGFILE="${SERVERROOT}/${CONFIGFILE}"
 	if [ ! -r "${CONFIGFILE}" ]; then
 		eerror "Unable to read configuration file: ${CONFIGFILE}"
 		return 1
 	fi
-	
+
 	APACHE2_OPTS="${APACHE2_OPTS} -d ${SERVERROOT}"
 	APACHE2_OPTS="${APACHE2_OPTS} -f ${CONFIGFILE}"
 	[ -n "${STARTUPERRORLOG}" ] && APACHE2_OPTS="${APACHE2_OPTS} -E ${STARTUPERRORLOG}"
@@ -43,7 +42,7 @@ checkconfig() {
 		eerror "Apache2 has detected a syntax error in your configuration files:"
 		${APACHE2} ${APACHE2_OPTS} -t
 	fi
-	
+
 	return $ret
 }
 
@@ -51,7 +50,7 @@ start() {
 	checkconfig || return 1
 	ebegin "Starting apache2"
 	[ -f /var/log/apache2/ssl_scache ] && rm /var/log/apache2/ssl_scache
-	
+
 	start-stop-daemon --start --exec ${APACHE2} -- ${APACHE2_OPTS} -k start
 	eend $?
 }
@@ -65,7 +64,7 @@ stop() {
 
 reload() {
 	RELOAD_TYPE="${RELOAD_TYPE:-graceful}"
-	
+
 	checkconfig || return 1
 	if [ "${RELOAD_TYPE}" = "restart" ]; then
 		ebegin "Restarting apache2"

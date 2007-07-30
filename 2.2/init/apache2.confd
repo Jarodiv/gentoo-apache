@@ -20,7 +20,6 @@
 #                      when you enable SSL unless you know what you are doing)
 #  SUEXEC     Enables running CGI scripts (in USERDIR) through suexec.
 #  USERDIR    Enables /~username mapping to /home/username/public_html
-
 APACHE2_OPTS="-D DEFAULT_VHOST -D LANGUAGE -D INFO"
 
 # Extended options for advanced uses of Apache ONLY
