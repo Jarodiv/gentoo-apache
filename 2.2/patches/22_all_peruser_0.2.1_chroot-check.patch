@@ -1,0 +1,51 @@
+Index: httpd-2.2.4/server/mpm/experimental/peruser/peruser.c
+===================================================================
+--- httpd-2.2.4.orig/server/mpm/experimental/peruser/peruser.c
++++ httpd-2.2.4/server/mpm/experimental/peruser/peruser.c
+@@ -1813,7 +1813,7 @@ static const char* child_clone()
+ }
+ 
+ static const char* child_add(int type, int status,
+-                             uid_t uid, gid_t gid, const char* chroot)
++                             apr_pool_t *pool, uid_t uid, gid_t gid, const char* chroot)
+ {
+     _DBG("adding child #%d", NUM_CHILDS);
+ 
+@@ -1823,6 +1823,9 @@ static const char* child_add(int type, i
+                "Increase NumServers in your config file.";
+     }
+ 
++	if (chroot && !ap_is_directory(pool, chroot))
++		return apr_psprintf(pool, "Error: chroot directory [%s] does not exist", chroot);
++
+     CHILD_INFO_TABLE[NUM_CHILDS].senv = senv_add(uid, gid, chroot);
+ 
+     if(CHILD_INFO_TABLE[NUM_CHILDS].senv == NULL)
+@@ -2735,7 +2738,7 @@ static const char *cf_Processor(cmd_parm
+         user_name, uid, group_name, gid, chroot);
+ 
+     return child_add(CHILD_TYPE_PROCESSOR, CHILD_STATUS_STANDBY,
+-                     uid, gid, chroot);
++                     cmd->pool, uid, gid, chroot);
+ }
+ 
+ /* we define an Multiplexer child w/ specific uid/gid */
+@@ -2749,7 +2752,7 @@ static const char *cf_Multiplexer(cmd_pa
+         user_name, uid, group_name, gid, chroot, NUM_CHILDS);
+ 
+     return child_add(CHILD_TYPE_MULTIPLEXER, CHILD_STATUS_STARTING,
+-                     uid, gid, chroot);
++                     cmd->pool, uid, gid, chroot);
+ }
+ 
+ static const char* cf_ServerEnvironment(cmd_parms *cmd, void *dummy,
+@@ -2761,6 +2764,9 @@ static const char* cf_ServerEnvironment(
+ 
+     _DBG("function entered", 0);
+ 
++	if (chroot && !ap_is_directory(cmd->pool, chroot))
++		return apr_psprintf(cmd->pool, "Error: chroot directory [%s] does not exist", chroot);
++
+     sconf->senv = senv_add(uid, gid, chroot);
+ 
+     _DBG("user=%s:%d group=%s:%d chroot=%s numchilds=%d",
