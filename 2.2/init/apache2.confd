@@ -5,11 +5,14 @@
 # install a configuration in /etc/apache2/modules.d. In that file will be an
 # <IfDefine NNN> where NNN is the option to enable that module.
 # Here are the options available in the default configuration:
+#
+#  CACHE      Enables mod_cache
+#  MEM_CACHE  Enables default configuration mod_mem_cache
 #  DAV        Enables mod_dav
 #  DEFAULT_VHOST   Enables name-based virtual hosts, with the default
 #                  virtual host being in /var/www/localhost/htdocs
 #  ERRORDOCS  Enables default error documents for many languages.
-#  INFO       Enables mod_info, a useful module for debugging [DEFAULT]
+#  INFO       Enables mod_info, a useful module for debugging
 #  LANGUAGE   Enables content-negotiation based on language and charset.
 #  LDAP       Enables mod_ldap (available if USE=ldap)
 #  AUTH_LDAP  Enables authentication through mod_ldap (available if USE=ldap)
@@ -20,6 +23,9 @@
 #                      when you enable SSL unless you know what you are doing)
 #  SUEXEC     Enables running CGI scripts (in USERDIR) through suexec.
 #  USERDIR    Enables /~username mapping to /home/username/public_html
+#
+# Warning: You need one of DEFAULT_VHOST or SSL_DEFAULT_VHOST, otherwise apache
+#          will not listen for incomming connections on any port.
 APACHE2_OPTS="-D DEFAULT_VHOST -D LANGUAGE -D INFO"
 
 # Extended options for advanced uses of Apache ONLY
