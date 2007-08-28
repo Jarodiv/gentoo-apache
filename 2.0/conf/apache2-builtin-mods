@@ -3,23 +3,20 @@
 # thus preserving your previous configuration.  The default configuration
 # in files/ is used if the one in /etc/apache2 isn't available.
 #
-# The syntax in this file has recently changed. To build a static module, put
-# 'static' next to it. To build a DSO module, put 'shared' next to it. To
-# disable a module (i.e. not built at all), put 'disabled' next to it.
+# To compile a module statically into the apache binary, simply put
+# static beside it.  To compile a module as a DSO, put shared beside
+# it.  To disable a module, simply put a - as the first character on
+# the line.
 #
 # Examples:
 # mod_access shared    ( this would build a DSO )
 # mod_actions static   ( this would get compiled statically )
 # - mod_alias shared   ( this module would not be built at all )
 #
-# Also new with 2.0, any shared modules defined in this file will have
-# LoadModule lines placed in the configuration for them.
-#
-# WARNING: Edit this file at your own risk! Some modules depend on other
-# modules being enabled as well - make sure you have everything satisfied, or
-# your apache may not compile or work correctly.
-
-VERSION: 2.0
+# Please be aware that if you _do_ customize these then you'll need
+# to manually adjust your httpd.conf file, tweaking the LoadModule
+# lines accordingly or else your server will fail to start; you've
+# been warned! (woodchip@gentoo.org  Nov 21 2002)
 
 - mod_example shared
 mod_access shared

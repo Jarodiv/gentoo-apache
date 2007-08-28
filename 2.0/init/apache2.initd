@@ -2,7 +2,37 @@
 # Copyright 1999-2005 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
 
-opts="configtest fullstatus graceful gracefulstop reload"
+opts="${opts} reload configtest"
+
+# TODO
+# Remove all the enviroment crap, as it's not needed after baselayout 1.12.0.
+# There are still people using older versions, baselayout 1.12.0 was first
+# stable with 2006.1, so we need to wait some time before doing that.
+clear_env_except() {
+
+	local save_env=$1
+	shift;
+
+	curr_env=$(env | sed 's/=.*//')
+
+	for env_var in ${curr_env}; do
+		local save=0
+		for save_var in ${save_env}; do
+			if [[ "${env_var}" == "${save_var}" ]]; then
+				save=1
+			fi
+		done
+
+		if [[ "${save}" == "0" ]]; then
+			unset_vars="${unset_vars} -u ${env_var}"
+		fi
+	done
+
+	env ${unset_vars} $@
+}
+
+
+
 
 depend() {
 	need net
@@ -25,19 +55,24 @@ checkconfig() {
 	fi
 	
 	CONFIGFILE="${CONFIGFILE:-/etc/apache2/httpd.conf}"
-	[ "${CONFIGFILE#/}" = "${CONFIGFILE}" ] && CONFIGFILE="${SERVERROOT}/${CONFIGFILE}"
+	[ ${CONFIGFILE:0:1} != "/" ] && CONFIGFILE="${SERVERROOT}/${CONFIGFILE}"
 	if [ ! -r "${CONFIGFILE}" ]; then
 		eerror "Unable to read configuration file: ${CONFIGFILE}"
 		return 1
 	fi
 	
+
 	APACHE2_OPTS="${APACHE2_OPTS} -d ${SERVERROOT}"
 	APACHE2_OPTS="${APACHE2_OPTS} -f ${CONFIGFILE}"
 	[ -n "${STARTUPERRORLOG}" ] && APACHE2_OPTS="${APACHE2_OPTS} -E ${STARTUPERRORLOG}"
 
-	APACHE2="/usr/sbin/apache2"
+	# set a sane default for KEEPENV
+	KEEPENV=${KEEPENV:-PATH}
 
-	${APACHE2} ${APACHE2_OPTS} -t 1>/dev/null 2>&1
+	APACHE2="/usr/sbin/apache2"
+	
+	# TODO kill the environment crap... see note above
+	clear_env_except "${KEEPENV}" ${APACHE2} ${APACHE2_OPTS} -t 1>/dev/null 2>&1
 	ret=$?
 	if [ $ret -ne 0 ]; then
 		eerror "Apache2 has detected a syntax error in your configuration files:"
@@ -52,65 +87,21 @@ start() {
 	ebegin "Starting apache2"
 	[ -f /var/log/apache2/ssl_scache ] && rm /var/log/apache2/ssl_scache
 	
-	start-stop-daemon --start --exec ${APACHE2} -- ${APACHE2_OPTS} -k start
+	# TODO kill the environment crap... see note above
+	clear_env_except "${KEEPENV}" /sbin/start-stop-daemon --start --exec ${APACHE2} --pidfile /var/run/apache2.pid -- ${APACHE2_OPTS} -k start
 	eend $?
 }
 
 stop() {
 	checkconfig || return 1
 	ebegin "Stopping apache2"
-	start-stop-daemon --stop --retry -TERM/5/-KILL/5 --exec ${APACHE2} --pidfile /var/run/apache2.pid
+	/sbin/start-stop-daemon --stop --retry -TERM/5/-TERM/5/-KILL/5 --exec ${APACHE2} --pidfile /var/run/apache2.pid
 	eend $?
 }
 
 reload() {
-	RELOAD_TYPE="${RELOAD_TYPE:-graceful}"
-	
 	checkconfig || return 1
-	if [ "${RELOAD_TYPE}" = "restart" ]; then
-		ebegin "Restarting apache2"
-		start-stop-daemon --stop --oknodo --signal HUP --exec ${APACHE2} --pidfile /var/run/apache2.pid
-		eend $?
-	elif [ "${RELOAD_TYPE}" = "graceful" ]; then
-		ebegin "Gracefully restarting apache2"
-		start-stop-daemon --stop --oknodo --signal USR1 --exec ${APACHE2} --pidfile /var/run/apache2.pid
-		eend $?
-	else
-		eerror "${RELOAD_TYPE} is not a valid RELOAD_TYPE. Please edit /etc/conf.d/apache2"
-	fi
-}
-
-graceful() {
-	checkconfig || return 1
-	ebegin "Gracefully restarting apache2"
-	start-stop-daemon --stop --signal USR1 --exec ${APACHE2} --pidfile /var/run/apache2.pid
+	ebegin "Doing a graceful restart of apache2"
+	/sbin/start-stop-daemon --stop --signal USR1 --exec ${APACHE2} --pidfile /var/run/apache2.pid
 	eend $?
-}
-
-gracefulstop() {
-	checkconfig || return 1
-	
-	# zap!
-	if service_started "${myservice}"; then
-		mark_service_stopped "${myservice}"
-	fi
-
-	ebegin "Gracefully stopping apache2"
-	# 28 is SIGWINCH
-	start-stop-daemon --stop --signal 28 --exec ${APACHE2} --pidfile /var/run/apache2.pid
-	eend $?
-}
-
-status() {
-	LYNX="${LYNX:-lynx -dump}"
-	STATUSURL="${STATUSURL:-http://localhost/server-status}"
-	
-	${LYNX} ${STATUSURL} | awk ' /process$/ { print; exit } { print } '
-}
-
-fullstatus() {
-	LYNX="${LYNX:-lynx -dump}"
-	STATUSURL="${STATUSURL:-http://localhost/server-status}"
-	
-	${LYNX} ${STATUSURL}
 }
