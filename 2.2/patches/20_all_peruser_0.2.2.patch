@@ -1,6 +1,6 @@
 diff -Nur httpd-2.2.3/server/mpm/config.m4 httpd-2.2.3-new/server/mpm/config.m4
 --- httpd-2.2.3/server/mpm/config.m4	2005-10-30 10:05:26.000000000 -0700
-+++ httpd-2.2.3-new/server/mpm/config.m4	2007-02-05 06:47:03.000000000 -0700
++++ httpd-2.2.3-new/server/mpm/config.m4	2007-08-17 18:23:23.000000000 -0600
 @@ -1,7 +1,7 @@
  AC_MSG_CHECKING(which MPM to use)
  AC_ARG_WITH(mpm,
@@ -21,7 +21,7 @@ diff -Nur httpd-2.2.3/server/mpm/config.m4 httpd-2.2.3-new/server/mpm/config.m4
          return 1
 diff -Nur httpd-2.2.3/server/mpm/experimental/peruser/Makefile.in httpd-2.2.3-new/server/mpm/experimental/peruser/Makefile.in
 --- httpd-2.2.3/server/mpm/experimental/peruser/Makefile.in	1969-12-31 17:00:00.000000000 -0700
-+++ httpd-2.2.3-new/server/mpm/experimental/peruser/Makefile.in	2007-02-05 06:47:03.000000000 -0700
++++ httpd-2.2.3-new/server/mpm/experimental/peruser/Makefile.in	2007-08-17 18:23:23.000000000 -0600
 @@ -0,0 +1,5 @@
 +
 +LTLIBRARY_NAME    = libperuser.la
@@ -30,14 +30,14 @@ diff -Nur httpd-2.2.3/server/mpm/experimental/peruser/Makefile.in httpd-2.2.3-ne
 +include $(top_srcdir)/build/ltlib.mk
 diff -Nur httpd-2.2.3/server/mpm/experimental/peruser/config.m4 httpd-2.2.3-new/server/mpm/experimental/peruser/config.m4
 --- httpd-2.2.3/server/mpm/experimental/peruser/config.m4	1969-12-31 17:00:00.000000000 -0700
-+++ httpd-2.2.3-new/server/mpm/experimental/peruser/config.m4	2007-02-05 06:47:03.000000000 -0700
++++ httpd-2.2.3-new/server/mpm/experimental/peruser/config.m4	2007-08-17 18:23:23.000000000 -0600
 @@ -0,0 +1,3 @@
 +if test "$MPM_NAME" = "peruser" ; then
 +    APACHE_FAST_OUTPUT(server/mpm/experimental/$MPM_NAME/Makefile)
 +fi
 diff -Nur httpd-2.2.3/server/mpm/experimental/peruser/mpm.h httpd-2.2.3-new/server/mpm/experimental/peruser/mpm.h
 --- httpd-2.2.3/server/mpm/experimental/peruser/mpm.h	1969-12-31 17:00:00.000000000 -0700
-+++ httpd-2.2.3-new/server/mpm/experimental/peruser/mpm.h	2007-02-05 06:47:03.000000000 -0700
++++ httpd-2.2.3-new/server/mpm/experimental/peruser/mpm.h	2007-08-17 18:23:23.000000000 -0600
 @@ -0,0 +1,103 @@
 +/* ====================================================================
 + * The Apache Software License, Version 1.1
@@ -144,7 +144,7 @@ diff -Nur httpd-2.2.3/server/mpm/experimental/peruser/mpm.h httpd-2.2.3-new/serv
 +#endif /* APACHE_MPM_PERUSER_H */
 diff -Nur httpd-2.2.3/server/mpm/experimental/peruser/mpm_default.h httpd-2.2.3-new/server/mpm/experimental/peruser/mpm_default.h
 --- httpd-2.2.3/server/mpm/experimental/peruser/mpm_default.h	1969-12-31 17:00:00.000000000 -0700
-+++ httpd-2.2.3-new/server/mpm/experimental/peruser/mpm_default.h	2007-02-05 06:47:03.000000000 -0700
++++ httpd-2.2.3-new/server/mpm/experimental/peruser/mpm_default.h	2007-08-17 18:23:23.000000000 -0600
 @@ -0,0 +1,110 @@
 +/* ====================================================================
 + * The Apache Software License, Version 1.1
@@ -258,8 +258,8 @@ diff -Nur httpd-2.2.3/server/mpm/experimental/peruser/mpm_default.h httpd-2.2.3-
 +#endif /* AP_MPM_DEFAULT_H */
 diff -Nur httpd-2.2.3/server/mpm/experimental/peruser/peruser.c httpd-2.2.3-new/server/mpm/experimental/peruser/peruser.c
 --- httpd-2.2.3/server/mpm/experimental/peruser/peruser.c	1969-12-31 17:00:00.000000000 -0700
-+++ httpd-2.2.3-new/server/mpm/experimental/peruser/peruser.c	2007-02-05 07:16:52.000000000 -0700
-@@ -0,0 +1,3006 @@
++++ httpd-2.2.3-new/server/mpm/experimental/peruser/peruser.c	2007-08-17 18:23:59.000000000 -0600
+@@ -0,0 +1,3130 @@
 +/* ====================================================================
 + * The Apache Software License, Version 1.1
 + *
@@ -526,6 +526,16 @@ diff -Nur httpd-2.2.3/server/mpm/experimental/peruser/peruser.c httpd-2.2.3-new/
 +
 +typedef struct
 +{
++    /* identification */
++    int id;                /* index in child_info_table */
++    pid_t pid;                /* process id */
++    int status;                /* status of child */
++    int type;           /* multiplexer or processor */
++    apr_time_t last_used;
++} child_grace_info_t;
++
++typedef struct
++{
 +    apr_size_t num;
 +} child_info_control;
 +
@@ -534,7 +544,6 @@ diff -Nur httpd-2.2.3/server/mpm/experimental/peruser/peruser.c httpd-2.2.3-new/
 +    child_info_control *control;
 +    child_info_t *table;
 +} child_info;
-+
 +
 +typedef struct
 +{
@@ -555,6 +564,7 @@ diff -Nur httpd-2.2.3/server/mpm/experimental/peruser/peruser.c httpd-2.2.3-new/
 + */
 +static apr_size_t child_info_size;
 +static child_info *child_info_image;
++static child_grace_info_t *child_grace_info_table;
 +struct ap_ctable *ap_child_table;
 +
 +#define NUM_CHILDS (child_info_image != NULL ? child_info_image->control->num : 0)
@@ -616,6 +626,9 @@ diff -Nur httpd-2.2.3/server/mpm/experimental/peruser/peruser.c httpd-2.2.3-new/
 +#endif /* TPF */
 +
 +static int die_now = 0;
++
++int grace_children = 0;
++int grace_children_alive = 0;
 +
 +#ifdef GPROF
 +/* 
@@ -2047,18 +2060,18 @@ diff -Nur httpd-2.2.3/server/mpm/experimental/peruser/peruser.c httpd-2.2.3-new/
 +    child_info_t *this;
 +    child_info_t *new;
 +
-+    if(NUM_CHILDS >= server_limit)
-+    {
-+        _DBG("Trying to use more child ID's than NumServers.  "
-+               "Increase NumServers in your config file.");
-+        return NULL;
-+    }
-+
 +    for(i = 0; i < NUM_CHILDS; i++)
 +    {
 +      if(CHILD_INFO_TABLE[i].pid == 0 &&
 +         CHILD_INFO_TABLE[i].type == CHILD_TYPE_UNKNOWN) break;
 +    }
++    
++    if(i == NUM_CHILDS && NUM_CHILDS >= server_limit)
++    {
++        _DBG("Trying to use more child ID's than NumServers.  "
++               "Increase NumServers in your config file.");
++        return NULL;
++    }    
 +
 +    _DBG("cloning child #%d from #%d", i, my_child_num);
 +
@@ -2289,8 +2302,48 @@ diff -Nur httpd-2.2.3/server/mpm/experimental/peruser/peruser.c httpd-2.2.3-new/
 +        ap_update_child_status_from_indexes(i, 0, SERVER_DEAD, NULL);
 +      }
 +    }
++    
++    for(i=0;i<grace_children;i++) {
++            if (child_grace_info_table[i].pid > 0 && 
++                            apr_time_sec(now - child_grace_info_table[i].last_used) > expire_timeout) {
++                    
++                    _DBG("Killing a child from last graceful (pid=%d,childno=%d,last_used=%d)", 
++                                    child_grace_info_table[i].pid, child_grace_info_table[i].id,
++                                    child_grace_info_table[i].last_used);
++            
++                    if(kill(child_grace_info_table[i].pid, SIGTERM) == -1)
++            {
++              ap_log_error(APLOG_MARK, APLOG_WARNING, errno,
++                ap_server_conf, "kill SIGTERM");
++            }
++                    
++                    /*        We don't need to do remove_grace_child() here,
++                     *  because it will be automatically done once 
++                     *  the child dies by ap_mpm_run() */
++            }
++    }
 +}
 +
++int remove_grace_child(int slot) {
++        if (slot < grace_children) {
++                child_grace_info_table[slot].id = 0;
++                child_grace_info_table[slot].pid = 0;
++                child_grace_info_table[slot].status = CHILD_STATUS_STANDBY;
++                child_grace_info_table[slot].type = CHILD_TYPE_UNKNOWN;
++                child_grace_info_table[slot].last_used = 0;
++                grace_children_alive--;
++                
++                if (grace_children_alive <= 0) { /*        All children have returned from graceful        */
++                        _DBG("Every child has returned from graceful restart - freeing child_grace_info_table");
++                        grace_children_alive = 0;
++                        is_graceful = 0;
++                        grace_children = 0;
++                        free(child_grace_info_table);
++                }
++                return 0;
++        }
++        return 1;
++}
 +
 +/*****************************************************************
 + * Executive routines.
@@ -2423,6 +2476,19 @@ diff -Nur httpd-2.2.3/server/mpm/experimental/peruser/peruser.c httpd-2.2.3-new/
 +            if (processed_status == APEXIT_CHILDFATAL) {
 +                mpm_state = AP_MPMQ_STOPPING;
 +                return 1;
++            }
++            
++            if (grace_children > 0) {
++                    for(i=0;i<grace_children;i++) {
++                            if (child_grace_info_table[i].pid == pid.pid) {
++                                    break;
++                            }
++                    }
++                    if (i != grace_children) {
++                            _DBG("Child returned from graceful (%d)", i);
++                            remove_grace_child(i);
++                            continue;
++                    }
 +            }
 +
 +            /* non-fatal death... note that it's gone in the scoreboard. */
@@ -2569,9 +2635,42 @@ diff -Nur httpd-2.2.3/server/mpm/experimental/peruser/peruser.c httpd-2.2.3-new/
 +         * gracefully dealing with existing request.
 +         */
 +
++        int alivechildren = 0;
++        int child_grace_info_size;
++        child_grace_info_t* old_grace_info;
++        void* mem;
++        
 +        for (i = 0; i < NUM_CHILDS; ++i)
 +        {
 +            ((ap_child_table[i].pid) && (ap_child_table[i].status = SERVER_DYING));
++            
++            if (CHILD_INFO_TABLE[i].pid) {
++                    alivechildren++;
++            }
++        }
++        
++        _DBG("Initializing child_grace_info_table", 0);
++        
++        if (alivechildren > 0) {
++                if (grace_children > 0) {
++                        old_grace_info = child_grace_info_table;
++                        _DBG("%d children still living from last graceful "
++                                        "- adding to new child_grace_info_table", 
++                                        grace_children);
++                }
++                
++                child_grace_info_table = (child_grace_info_t*)calloc(alivechildren+grace_children,
++                                sizeof(child_grace_info_t));
++                
++                if (grace_children > 0) {
++                        for(i=0;i<grace_children;i++) {
++                                child_grace_info_table[i] = old_grace_info[i];
++                        }
++                        grace_children = i;
++                        free(old_grace_info);
++                }
++                else grace_children = 0;
++                
 +        }
 +
 +        /* give the children the signal to die */
@@ -2583,8 +2682,19 @@ diff -Nur httpd-2.2.3/server/mpm/experimental/peruser/peruser.c httpd-2.2.3-new/
 +                ap_log_error(APLOG_MARK, APLOG_WARNING, rv, ap_server_conf,
 +                             "write pipe_of_death");
 +            }
++            if (CHILD_INFO_TABLE[i].pid) {
++                    child_grace_info_table[grace_children].id        = CHILD_INFO_TABLE[i].id;
++                    child_grace_info_table[grace_children].pid       = CHILD_INFO_TABLE[i].pid;
++                    child_grace_info_table[grace_children].status    = CHILD_INFO_TABLE[i].status;
++                    child_grace_info_table[grace_children].type      = CHILD_INFO_TABLE[i].type;
++                    child_grace_info_table[grace_children].last_used = ap_scoreboard_image->servers[i][0].last_used;
++                    grace_children++;
++                    grace_children_alive++;
++            }
 +            i++;
 +        }
++        _DBG("Total children of %d leaving behind for graceful restart (%d living)", 
++                        grace_children, grace_children_alive);
 +
 +        for (i = 0; i < NUM_SENV; i++)
 +        {
@@ -2654,9 +2764,9 @@ diff -Nur httpd-2.2.3/server/mpm/experimental/peruser/peruser.c httpd-2.2.3-new/
 +    return OK;
 +}
 +
++static int restart_num = 0;
 +static int peruser_pre_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t *ptemp)
 +{
-+    static int restart_num = 0;
 +    int no_detach, debug, foreground, i;
 +    int tmp_server_limit = DEFAULT_SERVER_LIMIT;
 +    ap_directive_t *pdir;
@@ -2681,8 +2791,6 @@ diff -Nur httpd-2.2.3/server/mpm/experimental/peruser/peruser.c httpd-2.2.3-new/
 +
 +    /* sigh, want this only the second time around */
 +    if (restart_num++ == 1) {
-+	is_graceful = 0;
-+
 +        if (!one_process && !foreground) {
 +            rv = apr_proc_detach(no_detach ? APR_PROC_DETACH_FOREGROUND
 +                                           : APR_PROC_DETACH_DAEMONIZE);
@@ -2952,6 +3060,22 @@ diff -Nur httpd-2.2.3/server/mpm/experimental/peruser/peruser.c httpd-2.2.3-new/
 +                       );
 +       }
 +    ap_rputs("</table>\n", r);
++    
++    if (grace_children > 0) {
++            ap_rputs("<h2>peruser graceful children status</h2>\n", r);
++            ap_rprintf(r, "%d of total %d still living<br />\n", grace_children_alive, grace_children);
++        ap_rputs("<table border=\"0\">\n", r);
++        ap_rputs("<tr><td>ID</td><td>PID</td><td>STATUS</td><td>TYPE</td></tr>\n", r);
++        for (x = 0; x < grace_children; x++) {
++            ap_rprintf(r, "<tr><td>%3d</td><td>%5d</td><td>%8s</td><td>%12s</td></tr>\n", 
++                           child_grace_info_table[x].id, 
++                           child_grace_info_table[x].pid, 
++                           child_status_string(child_grace_info_table[x].status), 
++                           child_type_string(child_grace_info_table[x].type)
++                           );
++        }
++        ap_rputs("</table>\n", r);
++    }
 +    return OK;
 +}
 +

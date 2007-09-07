@@ -37,9 +37,16 @@ APACHE2_OPTS="-D DEFAULT_VHOST"
 # They are normally dumped to your terminal.
 #STARTUPERRORLOG="/var/log/apache2/startuperror.log"
 
-# Environment variables to keep
-# All environment variables are cleared from apache
-# Use this to preserve some of them
-# NOTE!!! It's very important that this contains PATH
-# TODO: Phase this out in favor of /etc/conf.d/env_whitelist
-#KEEPENV="PATH"
+# A command that outputs a formatted text version of the HTML at the URL
+# of the command line. Designed for lynx, however other programs may work.
+#LYNX="lynx -dump"
+
+# The URL to your server's mod_status status page.
+# Required for status and fullstatus
+#STATUSURL="http://localhost/server-status"
+
+# Method to use when reloading the server
+# Valid options are 'restart' and 'graceful'
+# See http://httpd.apache.org/docs/2.2/stopping.html for information on
+# what they do and how they differ.
+#RELOAD_TYPE="graceful"

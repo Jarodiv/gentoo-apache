@@ -42,8 +42,8 @@ mod_authz_user shared
 mod_autoindex shared
 mod_cache shared
 mod_cern_meta disabled
-mod_cgi shared
-mod_cgid shared
+#mod_cgi disabled              # enable via USE-flag
+#mod_cgid disabled             # enable via USE-flag
 mod_charset_lite disabled
 mod_dav shared
 mod_dav_fs shared
