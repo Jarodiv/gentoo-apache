@@ -56,7 +56,6 @@ start() {
 }
 
 stop() {
-	checkconfig || return 1
 	ebegin "Stopping apache2"
 	start-stop-daemon --stop --retry -TERM/5/-KILL/5 --exec ${APACHE2} --pidfile /var/run/apache2.pid
 	eend $?
