@@ -19,7 +19,6 @@ diff -Nur httpd-2.2.3/server/mpm/config.m4 httpd-2.2.3-new/server/mpm/config.m4
          return 0
      else
          return 1
-diff -Nur httpd-2.2.3/server/mpm/experimental/peruser/Makefile.in httpd-2.2.3-new/server/mpm/experimental/peruser/Makefile.in
 --- httpd-2.2.3/server/mpm/experimental/peruser/Makefile.in	1969-12-31 17:00:00.000000000 -0700
 +++ httpd-2.2.3-new/server/mpm/experimental/peruser/Makefile.in	2007-08-17 18:23:23.000000000 -0600
 @@ -0,0 +1,5 @@
@@ -28,17 +27,15 @@ diff -Nur httpd-2.2.3/server/mpm/experimental/peruser/Makefile.in httpd-2.2.3-ne
 +LTLIBRARY_SOURCES = peruser.c
 +
 +include $(top_srcdir)/build/ltlib.mk
-diff -Nur httpd-2.2.3/server/mpm/experimental/peruser/config.m4 httpd-2.2.3-new/server/mpm/experimental/peruser/config.m4
 --- httpd-2.2.3/server/mpm/experimental/peruser/config.m4	1969-12-31 17:00:00.000000000 -0700
 +++ httpd-2.2.3-new/server/mpm/experimental/peruser/config.m4	2007-08-17 18:23:23.000000000 -0600
 @@ -0,0 +1,3 @@
 +if test "$MPM_NAME" = "peruser" ; then
 +    APACHE_FAST_OUTPUT(server/mpm/experimental/$MPM_NAME/Makefile)
 +fi
-diff -Nur httpd-2.2.3/server/mpm/experimental/peruser/mpm.h httpd-2.2.3-new/server/mpm/experimental/peruser/mpm.h
 --- httpd-2.2.3/server/mpm/experimental/peruser/mpm.h	1969-12-31 17:00:00.000000000 -0700
 +++ httpd-2.2.3-new/server/mpm/experimental/peruser/mpm.h	2007-08-17 18:23:23.000000000 -0600
-@@ -0,0 +1,103 @@
+@@ -0,0 +1,104 @@
 +/* ====================================================================
 + * The Apache Software License, Version 1.1
 + *
@@ -121,6 +118,7 @@ diff -Nur httpd-2.2.3/server/mpm/experimental/peruser/mpm.h httpd-2.2.3-new/serv
 +#define AP_MPM_WANT_SIGNAL_SERVER
 +#define AP_MPM_WANT_SET_MAX_MEM_FREE
 +#define AP_MPM_DISABLE_NAGLE_ACCEPTED_SOCK
++#define AP_MPM_WANT_FATAL_SIGNAL_HANDLER
 +
 +#define AP_MPM_USES_POD 1
 +#define MPM_CHILD_PID(i) (ap_scoreboard_image->parent[i].pid)
@@ -256,7 +254,6 @@ diff -Nur httpd-2.2.3/server/mpm/experimental/peruser/mpm_default.h httpd-2.2.3-
 +#endif
 +
 +#endif /* AP_MPM_DEFAULT_H */
-diff -Nur httpd-2.2.3/server/mpm/experimental/peruser/peruser.c httpd-2.2.3-new/server/mpm/experimental/peruser/peruser.c
 --- httpd-2.2.3/server/mpm/experimental/peruser/peruser.c	1969-12-31 17:00:00.000000000 -0700
 +++ httpd-2.2.3-new/server/mpm/experimental/peruser/peruser.c	2007-08-17 18:23:59.000000000 -0600
 @@ -0,0 +1,3130 @@
