@@ -16,7 +16,7 @@ configtest() {
 	eend $?
 }
 
-checkconfig() {
+checkconfd() {
 	SERVERROOT="${SERVERROOT:-/usr/lib/apache2}"
 	if [ ! -d ${SERVERROOT} ]; then
 		eerror "SERVERROOT does not exist: ${SERVERROOT}"
@@ -35,6 +35,10 @@ checkconfig() {
 	[ -n "${STARTUPERRORLOG}" ] && APACHE2_OPTS="${APACHE2_OPTS} -E ${STARTUPERRORLOG}"
 
 	APACHE2="/usr/sbin/apache2"
+}
+
+checkconfig() {
+	checkconfd || return 1
 
 	${APACHE2} ${APACHE2_OPTS} -t 1>/dev/null 2>&1
 	ret=$?
@@ -51,13 +55,14 @@ start() {
 	ebegin "Starting apache2"
 	[ -f /var/log/apache2/ssl_scache ] && rm /var/log/apache2/ssl_scache
 
-	start-stop-daemon --start --exec ${APACHE2} -- ${APACHE2_OPTS} -k start
+	${APACHE2} ${APACHE2_OPTS} -k start
 	eend $?
 }
 
 stop() {
+	checkconfd || return 1
 	ebegin "Stopping apache2"
-	start-stop-daemon --stop --retry -TERM/5/-KILL/5 --exec ${APACHE2} --pidfile /var/run/apache2.pid
+	${APACHE2} ${APACHE2_OPTS} -k stop
 	eend $?
 }
 
@@ -67,11 +72,11 @@ reload() {
 	checkconfig || return 1
 	if [ "${RELOAD_TYPE}" = "restart" ]; then
 		ebegin "Restarting apache2"
-		start-stop-daemon --stop --oknodo --signal HUP --exec ${APACHE2} --pidfile /var/run/apache2.pid
+		${APACHE2} -k restart
 		eend $?
 	elif [ "${RELOAD_TYPE}" = "graceful" ]; then
 		ebegin "Gracefully restarting apache2"
-		start-stop-daemon --stop --oknodo --signal USR1 --exec ${APACHE2} --pidfile /var/run/apache2.pid
+		${APACHE2} -k graceful
 		eend $?
 	else
 		eerror "${RELOAD_TYPE} is not a valid RELOAD_TYPE. Please edit /etc/conf.d/apache2"
@@ -81,7 +86,7 @@ reload() {
 graceful() {
 	checkconfig || return 1
 	ebegin "Gracefully restarting apache2"
-	start-stop-daemon --stop --signal USR1 --exec ${APACHE2} --pidfile /var/run/apache2.pid
+	${APACHE2} -k graceful
 	eend $?
 }
 
@@ -94,8 +99,7 @@ gracefulstop() {
 	fi
 
 	ebegin "Gracefully stopping apache2"
-	# 28 is SIGWINCH
-	start-stop-daemon --stop --signal 28 --exec ${APACHE2} --pidfile /var/run/apache2.pid
+	${APACHE2} -k gracefulstop
 	eend $?
 }
 
