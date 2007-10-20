@@ -72,11 +72,11 @@ reload() {
 	checkconfig || return 1
 	if [ "${RELOAD_TYPE}" = "restart" ]; then
 		ebegin "Restarting apache2"
-		${APACHE2} -k restart
+		${APACHE2} ${APACHE2_OPTS} -k restart
 		eend $?
 	elif [ "${RELOAD_TYPE}" = "graceful" ]; then
 		ebegin "Gracefully restarting apache2"
-		${APACHE2} -k graceful
+		${APACHE2} ${APACHE2_OPTS} -k graceful
 		eend $?
 	else
 		eerror "${RELOAD_TYPE} is not a valid RELOAD_TYPE. Please edit /etc/conf.d/apache2"
@@ -86,7 +86,7 @@ reload() {
 graceful() {
 	checkconfig || return 1
 	ebegin "Gracefully restarting apache2"
-	${APACHE2} -k graceful
+	${APACHE2} ${APACHE2_OPTS} -k graceful
 	eend $?
 }
 
@@ -99,7 +99,7 @@ gracefulstop() {
 	fi
 
 	ebegin "Gracefully stopping apache2"
-	${APACHE2} -k gracefulstop
+	${APACHE2} ${APACHE2_OPTS} -k gracefulstop
 	eend $?
 }
 
@@ -109,16 +109,13 @@ modules() {
 	${APACHE2} ${APACHE2_OPTS} -M 2>&1
 }
 
-status() {
-	LYNX="${LYNX:-lynx -dump}"
-	STATUSURL="${STATUSURL:-http://localhost/server-status}"
-	
-	${LYNX} ${STATUSURL} | awk ' /process$/ { print; exit } { print } '
-}
-
 fullstatus() {
 	LYNX="${LYNX:-lynx -dump}"
 	STATUSURL="${STATUSURL:-http://localhost/server-status}"
-	
-	${LYNX} ${STATUSURL}
+
+	if ! type -p ${LYNX} 2>&1 >/dev/null; then
+		eerror "lynx not found! you need to emerge www-client/lynx"
+	else
+		${LYNX} ${STATUSURL}
+	fi
 }
