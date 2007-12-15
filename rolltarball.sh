@@ -497,11 +497,11 @@ build_tarball() {
 	then
 		if [ -r ${EBUILD} ]
 		then
-			pretend && einfo "  Update GENTOO_PATCHSTAMP and GENTOO_DEVSPACE"
+			pretend && einfo "  Update GENTOO_PATCHSTAMP and GENTOO_DEVELOPER"
 			pretend || {
-				ebegin "Updating GENTOO_PATCHSTAMP and GENTOO_DEVSPACE"
+				ebegin "Updating GENTOO_PATCHSTAMP and GENTOO_DEVELOPER"
 				sed -i -e "s/GENTOO_PATCHSTAMP=\".*\"/GENTOO_PATCHSTAMP=\"${DATESTAMP}\"/" ${EBUILD} && 
-				sed -i -e "s/GENTOO_DEVSPACE=\".*\"/GENTOO_DEVSPACE=\"${G_USER}\"/" ${EBUILD}
+				sed -i -e "s/GENTOO_DEVELOPER=\".*\"/GENTOO_DEVELOPER=\"${G_USER}\"/" ${EBUILD}
 				eend $? "Failed to modify ebuild" || {
 					einfo "It's highly recommended that you delete the ebuild"
 					einfo "and cvs up and then modify the ebuild manually."
