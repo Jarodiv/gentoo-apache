@@ -1,8 +1,9 @@
 Provide escaping for the ampersand in mod_rewrite
-diff -ur httpd-2.2.0/modules/mappers/mod_rewrite.c httpd-2.2.0.patched/modules/mappers/mod_rewrite.c
---- httpd-2.2.0/modules/mappers/mod_rewrite.c	2005-11-10 07:20:05.000000000 -0800
-+++ httpd-2.2.0.patched/modules/mappers/mod_rewrite.c	2006-02-04 13:52:34.000000000 -0800
-@@ -1075,6 +1075,30 @@
+Index: httpd-2.2.6/modules/mappers/mod_rewrite.c
+===================================================================
+--- httpd-2.2.6.orig/modules/mappers/mod_rewrite.c
++++ httpd-2.2.6/modules/mappers/mod_rewrite.c
+@@ -1071,6 +1071,30 @@ static char *rewrite_mapfunc_escape(requ
      return ap_escape_uri(r->pool, key);
  }
  
@@ -33,7 +34,7 @@ diff -ur httpd-2.2.0/modules/mappers/mod_rewrite.c httpd-2.2.0.patched/modules/m
  static char *rewrite_mapfunc_unescape(request_rec *r, char *key)
  {
      ap_unescape_url(key);
-@@ -4011,6 +4035,7 @@
+@@ -4007,6 +4031,7 @@ static int pre_config(apr_pool_t *pconf,
          map_pfn_register("tolower", rewrite_mapfunc_tolower);
          map_pfn_register("toupper", rewrite_mapfunc_toupper);
          map_pfn_register("escape", rewrite_mapfunc_escape);

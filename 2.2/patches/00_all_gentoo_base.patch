@@ -6,8 +6,10 @@ Customizations for Gentoo
  support/apxs.in |   11 -----------
  4 files changed, 3 insertions(+), 14 deletions(-)
 
---- a/Makefile.in
-+++ b/Makefile.in
+Index: httpd-2.2.6/Makefile.in
+===================================================================
+--- httpd-2.2.6.orig/Makefile.in
++++ httpd-2.2.6/Makefile.in
 @@ -14,7 +14,7 @@ PROGRAM_DEPENDENCIES = \
  
  PROGRAMS        = $(PROGRAM_NAME)
@@ -17,8 +19,10 @@ Customizations for Gentoo
  	install-other install-cgi install-include install-suexec install-build \
  	install-man
  
---- a/include/httpd.h
-+++ b/include/httpd.h
+Index: httpd-2.2.6/include/httpd.h
+===================================================================
+--- httpd-2.2.6.orig/include/httpd.h
++++ httpd-2.2.6/include/httpd.h
 @@ -155,7 +155,7 @@ extern "C" {
  
  /** The path to the suExec wrapper, can be overridden in Configuration */
@@ -28,8 +32,10 @@ Customizations for Gentoo
  #endif
  
  /** The timeout for waiting for messages */
---- a/server/core.c
-+++ b/server/core.c
+Index: httpd-2.2.6/server/core.c
+===================================================================
+--- httpd-2.2.6.orig/server/core.c
++++ httpd-2.2.6/server/core.c
 @@ -2794,7 +2794,7 @@ static void set_banner(apr_pool_t *pconf
          ap_add_version_component(pconf, AP_SERVER_BASEPRODUCT "/" AP_SERVER_MAJORVERSION);
      }
@@ -39,8 +45,10 @@ Customizations for Gentoo
      }
  
      /*
---- a/support/apxs.in
-+++ b/support/apxs.in
+Index: httpd-2.2.6/support/apxs.in
+===================================================================
+--- httpd-2.2.6.orig/support/apxs.in
++++ httpd-2.2.6/support/apxs.in
 @@ -190,9 +190,6 @@ if (@opt_S) {
  my $httpd = get_vars("sbindir") . "/" . get_vars("progname");
  $httpd = eval qq("$httpd");

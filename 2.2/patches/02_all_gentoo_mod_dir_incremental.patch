@@ -1,7 +1,8 @@
-diff -ur httpd-2.0.58.orig/modules/mappers/mod_dir.c httpd-2.0.58/modules/mappers/mod_dir.c
---- httpd-2.0.58.orig/modules/mappers/mod_dir.c	2007-03-31 19:36:23.000000000 -0400
-+++ httpd-2.0.58/modules/mappers/mod_dir.c	2007-03-31 19:39:22.000000000 -0400
-@@ -39,6 +39,7 @@
+Index: httpd-2.2.6/modules/mappers/mod_dir.c
+===================================================================
+--- httpd-2.2.6.orig/modules/mappers/mod_dir.c
++++ httpd-2.2.6/modules/mappers/mod_dir.c
+@@ -39,6 +39,7 @@ typedef enum {
  
  typedef struct dir_config_struct {
      apr_array_header_t *index_names;
@@ -9,7 +10,7 @@ diff -ur httpd-2.0.58.orig/modules/mappers/mod_dir.c httpd-2.0.58/modules/mapper
      slash_cfg do_slash;
  } dir_config_rec;
  
-@@ -55,6 +56,23 @@
+@@ -55,6 +56,23 @@ static const char *add_index(cmd_parms *
      return NULL;
  }
  
@@ -33,7 +34,7 @@ diff -ur httpd-2.0.58.orig/modules/mappers/mod_dir.c httpd-2.0.58/modules/mapper
  static const char *configure_slash(cmd_parms *cmd, void *d_, int arg)
  {
      dir_config_rec *d = d_;
-@@ -67,6 +85,8 @@
+@@ -67,6 +85,8 @@ static const command_rec dir_cmds[] =
  {
      AP_INIT_ITERATE("DirectoryIndex", add_index, NULL, DIR_CMD_PERMS,
                      "a list of file names"),
@@ -42,7 +43,7 @@ diff -ur httpd-2.0.58.orig/modules/mappers/mod_dir.c httpd-2.0.58/modules/mapper
      AP_INIT_FLAG("DirectorySlash", configure_slash, NULL, DIR_CMD_PERMS,
                   "On or Off"),
      {NULL}
-@@ -77,6 +97,7 @@
+@@ -77,6 +97,7 @@ static void *create_dir_config(apr_pool_
      dir_config_rec *new = apr_pcalloc(p, sizeof(dir_config_rec));
  
      new->index_names = NULL;
@@ -50,7 +51,7 @@ diff -ur httpd-2.0.58.orig/modules/mappers/mod_dir.c httpd-2.0.58/modules/mapper
      new->do_slash = SLASH_UNSET;
      return (void *) new;
  }
-@@ -87,7 +108,26 @@
+@@ -87,7 +108,26 @@ static void *merge_dir_configs(apr_pool_
      dir_config_rec *base = (dir_config_rec *)basev;
      dir_config_rec *add = (dir_config_rec *)addv;
  
@@ -78,7 +79,7 @@ diff -ur httpd-2.0.58.orig/modules/mappers/mod_dir.c httpd-2.0.58/modules/mapper
      new->do_slash =
          (add->do_slash == SLASH_UNSET) ? base->do_slash : add->do_slash;
      return new;
-@@ -155,6 +195,14 @@
+@@ -155,6 +195,14 @@ static int fixup_dir(request_rec *r)
          return DECLINED;
      }
  

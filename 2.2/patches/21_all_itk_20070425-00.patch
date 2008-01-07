@@ -1,7 +1,7 @@
-Index: httpd-2.2.4/server/mpm/config.m4
+Index: httpd-2.2.6/server/mpm/config.m4
 ===================================================================
---- httpd-2.2.4.orig/server/mpm/config.m4
-+++ httpd-2.2.4/server/mpm/config.m4
+--- httpd-2.2.6.orig/server/mpm/config.m4
++++ httpd-2.2.6/server/mpm/config.m4
 @@ -1,7 +1,7 @@
  AC_MSG_CHECKING(which MPM to use)
  AC_ARG_WITH(mpm,
@@ -11,7 +11,7 @@ Index: httpd-2.2.4/server/mpm/config.m4
    APACHE_MPM=$withval
  ],[
    if test "x$APACHE_MPM" = "x"; then
-@@ -23,7 +23,7 @@
+@@ -23,7 +23,7 @@ ap_mpm_is_threaded ()
  
  ap_mpm_is_experimental ()
  {
@@ -20,7 +20,7 @@ Index: httpd-2.2.4/server/mpm/config.m4
          return 0
      else
          return 1
-@@ -66,6 +66,11 @@
+@@ -66,6 +66,11 @@ if ap_mpm_is_experimental; then
  else
    MPM_SUBDIR_NAME=$MPM_NAME
  fi
@@ -32,16 +32,18 @@ Index: httpd-2.2.4/server/mpm/config.m4
  MPM_DIR=server/mpm/$MPM_SUBDIR_NAME
  MPM_LIB=$MPM_DIR/lib${MPM_NAME}.la
  
-Index: httpd-2.2.4/server/mpm/experimental/itk/config.m4
+Index: httpd-2.2.6/server/mpm/experimental/itk/config.m4
+===================================================================
 --- /dev/null
-+++ httpd-2.2.4/server/mpm/experimental/itk/config.m4
++++ httpd-2.2.6/server/mpm/experimental/itk/config.m4
 @@ -0,0 +1,3 @@
 +if test "$MPM_NAME" = "itk" ; then
 +    APACHE_FAST_OUTPUT(server/mpm/$MPM_SUBDIR_NAME/Makefile)
 +fi
-Index: httpd-2.2.4/server/mpm/experimental/itk/itk.c
+Index: httpd-2.2.6/server/mpm/experimental/itk/itk.c
+===================================================================
 --- /dev/null
-+++ httpd-2.2.4/server/mpm/experimental/itk/itk.c
++++ httpd-2.2.6/server/mpm/experimental/itk/itk.c
 @@ -0,0 +1,1682 @@
 +/* Licensed to the Apache Software Foundation (ASF) under one or more
 + * contributor license agreements.  See the NOTICE file distributed with
@@ -1725,19 +1727,20 @@ Index: httpd-2.2.4/server/mpm/experimental/itk/itk.c
 +    itk_cmds,                   /* command apr_table_t */
 +    itk_hooks,                  /* register hooks */
 +};
-Index: httpd-2.2.4/server/mpm/experimental/itk/Makefile.in
+Index: httpd-2.2.6/server/mpm/experimental/itk/Makefile.in
 ===================================================================
 --- /dev/null
-+++ httpd-2.2.4/server/mpm/experimental/itk/Makefile.in
++++ httpd-2.2.6/server/mpm/experimental/itk/Makefile.in
 @@ -0,0 +1,5 @@
 +
 +LTLIBRARY_NAME    = libitk.la
 +LTLIBRARY_SOURCES = itk.c
 +
 +include $(top_srcdir)/build/ltlib.mk
-Index: httpd-2.2.4/server/mpm/experimental/itk/mpm_default.h
+Index: httpd-2.2.6/server/mpm/experimental/itk/mpm_default.h
+===================================================================
 --- /dev/null
-+++ httpd-2.2.4/server/mpm/experimental/itk/mpm_default.h
++++ httpd-2.2.6/server/mpm/experimental/itk/mpm_default.h
 @@ -0,0 +1,77 @@
 +/* Licensed to the Apache Software Foundation (ASF) under one or more
 + * contributor license agreements.  See the NOTICE file distributed with
@@ -1816,9 +1819,10 @@ Index: httpd-2.2.4/server/mpm/experimental/itk/mpm_default.h
 +
 +#endif /* AP_MPM_DEFAULT_H */
 +/** @} */
-Index: httpd-2.2.4/server/mpm/experimental/itk/mpm.h
+Index: httpd-2.2.6/server/mpm/experimental/itk/mpm.h
+===================================================================
 --- /dev/null
-+++ httpd-2.2.4/server/mpm/experimental/itk/mpm.h
++++ httpd-2.2.6/server/mpm/experimental/itk/mpm.h
 @@ -0,0 +1,65 @@
 +/* Licensed to the Apache Software Foundation (ASF) under one or more
 + * contributor license agreements.  See the NOTICE file distributed with
