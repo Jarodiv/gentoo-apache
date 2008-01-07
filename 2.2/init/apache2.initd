@@ -70,7 +70,7 @@ reload() {
 	RELOAD_TYPE="${RELOAD_TYPE:-graceful}"
 
 	checkconfig || return 1
-	service_started "${myservice}" || return
+	service_started "${SVCNAME}" || return
 
 	if [ "${RELOAD_TYPE}" = "restart" ]; then
 		ebegin "Restarting apache2"
@@ -87,7 +87,7 @@ reload() {
 
 graceful() {
 	checkconfig || return 1
-	service_started "${myservice}" || return
+	service_started "${SVCNAME}" || return
 	ebegin "Gracefully restarting apache2"
 	${APACHE2} ${APACHE2_OPTS} -k graceful
 	eend $?
@@ -97,8 +97,8 @@ gracefulstop() {
 	checkconfig || return 1
 
 	# zap!
-	if service_started "${myservice}"; then
-		mark_service_stopped "${myservice}"
+	if service_started "${SVCNAME}"; then
+		mark_service_stopped "${SVCNAME}"
 	fi
 
 	ebegin "Gracefully stopping apache2"
