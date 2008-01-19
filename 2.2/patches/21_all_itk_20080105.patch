@@ -1,7 +1,7 @@
-Index: httpd-2.2.6/server/mpm/config.m4
+Index: httpd-2.2.8/server/mpm/config.m4
 ===================================================================
---- httpd-2.2.6.orig/server/mpm/config.m4
-+++ httpd-2.2.6/server/mpm/config.m4
+--- httpd-2.2.8.orig/server/mpm/config.m4
++++ httpd-2.2.8/server/mpm/config.m4
 @@ -1,7 +1,7 @@
  AC_MSG_CHECKING(which MPM to use)
  AC_ARG_WITH(mpm,
@@ -32,19 +32,19 @@ Index: httpd-2.2.6/server/mpm/config.m4
  MPM_DIR=server/mpm/$MPM_SUBDIR_NAME
  MPM_LIB=$MPM_DIR/lib${MPM_NAME}.la
  
-Index: httpd-2.2.6/server/mpm/experimental/itk/config.m4
+Index: httpd-2.2.8/server/mpm/experimental/itk/config.m4
 ===================================================================
 --- /dev/null
-+++ httpd-2.2.6/server/mpm/experimental/itk/config.m4
++++ httpd-2.2.8/server/mpm/experimental/itk/config.m4
 @@ -0,0 +1,3 @@
 +if test "$MPM_NAME" = "itk" ; then
 +    APACHE_FAST_OUTPUT(server/mpm/$MPM_SUBDIR_NAME/Makefile)
 +fi
-Index: httpd-2.2.6/server/mpm/experimental/itk/itk.c
+Index: httpd-2.2.8/server/mpm/experimental/itk/itk.c
 ===================================================================
 --- /dev/null
-+++ httpd-2.2.6/server/mpm/experimental/itk/itk.c
-@@ -0,0 +1,1682 @@
++++ httpd-2.2.8/server/mpm/experimental/itk/itk.c
+@@ -0,0 +1,1704 @@
 +/* Licensed to the Apache Software Foundation (ASF) under one or more
 + * contributor license agreements.  See the NOTICE file distributed with
 + * this work for additional information regarding copyright ownership.
@@ -199,6 +199,8 @@ Index: httpd-2.2.6/server/mpm/experimental/itk/itk.c
 +#endif /* TPF */
 +
 +static volatile int die_now = 0;
++static volatile int listeners_closed = 0;
++static int active_connection = 0;
 +
 +typedef struct
 +{
@@ -401,7 +403,10 @@ Index: httpd-2.2.6/server/mpm/experimental/itk/itk.c
 +
 +static void stop_listening(int sig)
 +{
-+    ap_close_listeners();
++    if (active_connection) {
++        ap_close_listeners();
++        listeners_closed = 1;
++    }
 +
 +    /* For a graceful stop, we want the child to exit when done */
 +    die_now = 1;
@@ -662,6 +667,11 @@ Index: httpd-2.2.6/server/mpm/experimental/itk/itk.c
 +                apr_int32_t numdesc;
 +                const apr_pollfd_t *pdesc;
 +
++                if (die_now) {
++                    status = !APR_SUCCESS;
++                    goto unlock;
++                }
++
 +                /* timeout == -1 == wait forever */
 +                status = apr_pollset_poll(pollset, -1, &numdesc, &pdesc);
 +                if (status != APR_SUCCESS) {
@@ -710,8 +720,14 @@ Index: httpd-2.2.6/server/mpm/experimental/itk/itk.c
 +        /* if we accept() something we don't want to die, so we have to
 +         * defer the exit
 +         */
-+        status = lr->accept_func(&csd, lr, ptrans);
++        if (!die_now) {
++            status = lr->accept_func(&csd, lr, ptrans);
++        }
++        else {
++            status = !APR_SUCCESS;
++        }
 +
++    unlock:
 +        SAFE_ACCEPT(accept_mutex_off());      /* unlock after "accept" */
 +
 +        if (status == APR_EGENERAL) {
@@ -726,6 +742,13 @@ Index: httpd-2.2.6/server/mpm/experimental/itk/itk.c
 +         * We now have a connection, so set it up with the appropriate
 +         * socket options, file descriptors, and read/write buffers.
 +         */
++
++        active_connection = 1;
++        if (die_now && !listeners_closed) {
++            ap_close_listeners();
++            listeners_closed = 1;
++        }
++
 +        {
 +            pid_t pid = fork();
 +            int status;
@@ -734,7 +757,7 @@ Index: httpd-2.2.6/server/mpm/experimental/itk/itk.c
 +                ap_log_error(APLOG_MARK, APLOG_ERR, errno, NULL, "fork: Unable to fork new process");
 +                break;
 +            case 0: /* child */
-+               apr_proc_mutex_child_init(&accept_mutex, ap_lock_fname, pchild); 
++                apr_proc_mutex_child_init(&accept_mutex, ap_lock_fname, pchild);
 +                current_conn = ap_run_create_connection(ptrans, ap_server_conf, csd, my_child_num, sbh, bucket_alloc);
 +                if (current_conn) {
 +                    ap_process_connection(current_conn, csd);
@@ -755,6 +778,7 @@ Index: httpd-2.2.6/server/mpm/experimental/itk/itk.c
 +                break;
 +            }
 +        }
++        active_connection = 0;
 +
 +        /* Check the pod and the generation number after processing a
 +         * connection so that we'll go away if a graceful restart occurred
@@ -1103,7 +1127,7 @@ Index: httpd-2.2.6/server/mpm/experimental/itk/itk.c
 +
 +    ap_log_error(APLOG_MARK, APLOG_NOTICE, 0, ap_server_conf,
 +                "%s configured -- resuming normal operations",
-+                ap_get_server_version());
++                ap_get_server_description());
 +    ap_log_error(APLOG_MARK, APLOG_INFO, 0, ap_server_conf,
 +                "Server built: %s", ap_get_server_built());
 +#ifdef AP_MPM_WANT_SET_ACCEPT_LOCK_MECH
@@ -1284,13 +1308,11 @@ Index: httpd-2.2.6/server/mpm/experimental/itk/itk.c
 +
 +            active_children = 0;
 +            for (index = 0; index < ap_daemons_limit; ++index) {
-+                //if (MPM_CHILD_PID(index) != 0) {
-+                    if (ap_mpm_safe_kill(MPM_CHILD_PID(index), 0) == APR_SUCCESS) {
-+                            active_children = 1;
-+                            /* Having just one child is enough to stay around */
-+                            break;
-+                    }
-+                //}
++                if (ap_mpm_safe_kill(MPM_CHILD_PID(index), 0) == APR_SUCCESS) {
++                    active_children = 1;
++                    /* Having just one child is enough to stay around */
++                    break;
++                }
 +            }
 +        } while (!shutdown_pending && active_children &&
 +                 (!ap_graceful_shutdown_timeout || apr_time_now() < cutoff));
@@ -1468,7 +1490,7 @@ Index: httpd-2.2.6/server/mpm/experimental/itk/itk.c
 +
 +    strncpy(ap_scoreboard_image->servers[my_child_num][0].vhost, r->server->server_hostname, 31);
 +    ap_scoreboard_image->servers[my_child_num][0].vhost[31] = 0;
-+    
++
 +    if (setpriority(PRIO_PROCESS, 0, sconf->nice_value)) {
 +        _DBG("setpriority(): %s", strerror(errno));
 +        err = 1;
@@ -1483,7 +1505,7 @@ Index: httpd-2.2.6/server/mpm/experimental/itk/itk.c
 +        wanted_gid = unixd_config.group_id;
 +        wanted_username = unixd_config.user_name;
 +    }
-+   
++
 +    if (!err && wanted_uid != -1 && wanted_gid != -1 && (getuid() != wanted_uid || getgid() != wanted_gid)) {
 +        if (setgid(wanted_gid)) {
 +            _DBG("setgid(): %s", strerror(errno));
@@ -1643,7 +1665,7 @@ Index: httpd-2.2.6/server/mpm/experimental/itk/itk.c
 +    return NULL;
 +}
 +
-+static const char *assign_user_id (cmd_parms *cmd, void *dummy, const char *user_name, const char *group_name)   
++static const char *assign_user_id (cmd_parms *cmd, void *dummy, const char *user_name, const char *group_name)
 +{
 +    itk_server_conf *sconf =
 +        (itk_server_conf *) ap_get_module_config(cmd->server->module_config, &mpm_itk_module);
@@ -1651,7 +1673,7 @@ Index: httpd-2.2.6/server/mpm/experimental/itk/itk.c
 +    sconf->uid = ap_uname2id(user_name);
 +    sconf->gid = ap_gname2id(group_name);
 +    return NULL;
-+}   
++}
 +
 +static const char *set_max_clients_vhost (cmd_parms *cmd, void *dummy, const char *arg)   
 +{
@@ -1661,7 +1683,7 @@ Index: httpd-2.2.6/server/mpm/experimental/itk/itk.c
 +    return NULL;
 +}  
 +
-+static const char *set_nice_value (cmd_parms *cmd, void *dummy, const char *arg)   
++static const char *set_nice_value (cmd_parms *cmd, void *dummy, const char *arg)
 +{
 +    itk_server_conf *sconf =
 +        (itk_server_conf *) ap_get_module_config(cmd->server->module_config, &mpm_itk_module);
@@ -1672,7 +1694,7 @@ Index: httpd-2.2.6/server/mpm/experimental/itk/itk.c
 +                     "WARNING: NiceValue of %d is below -20, increasing NiceValue to -20.",
 +                     nice_value);
 +        nice_value = -20;
-+    } 
++    }
 +    else if (nice_value > 19) {
 +        ap_log_error(APLOG_MARK, APLOG_STARTUP, 0, NULL,
 +                     "WARNING: NiceValue of %d is above 19, lowering NiceValue to 19.",
@@ -1681,7 +1703,7 @@ Index: httpd-2.2.6/server/mpm/experimental/itk/itk.c
 +    }
 +    sconf->nice_value = nice_value;
 +    return NULL;
-+}  
++}
 +
 +static const command_rec itk_cmds[] = {
 +UNIX_DAEMON_COMMANDS,
@@ -1727,20 +1749,20 @@ Index: httpd-2.2.6/server/mpm/experimental/itk/itk.c
 +    itk_cmds,                   /* command apr_table_t */
 +    itk_hooks,                  /* register hooks */
 +};
-Index: httpd-2.2.6/server/mpm/experimental/itk/Makefile.in
+Index: httpd-2.2.8/server/mpm/experimental/itk/Makefile.in
 ===================================================================
 --- /dev/null
-+++ httpd-2.2.6/server/mpm/experimental/itk/Makefile.in
++++ httpd-2.2.8/server/mpm/experimental/itk/Makefile.in
 @@ -0,0 +1,5 @@
 +
 +LTLIBRARY_NAME    = libitk.la
 +LTLIBRARY_SOURCES = itk.c
 +
 +include $(top_srcdir)/build/ltlib.mk
-Index: httpd-2.2.6/server/mpm/experimental/itk/mpm_default.h
+Index: httpd-2.2.8/server/mpm/experimental/itk/mpm_default.h
 ===================================================================
 --- /dev/null
-+++ httpd-2.2.6/server/mpm/experimental/itk/mpm_default.h
++++ httpd-2.2.8/server/mpm/experimental/itk/mpm_default.h
 @@ -0,0 +1,77 @@
 +/* Licensed to the Apache Software Foundation (ASF) under one or more
 + * contributor license agreements.  See the NOTICE file distributed with
@@ -1819,10 +1841,10 @@ Index: httpd-2.2.6/server/mpm/experimental/itk/mpm_default.h
 +
 +#endif /* AP_MPM_DEFAULT_H */
 +/** @} */
-Index: httpd-2.2.6/server/mpm/experimental/itk/mpm.h
+Index: httpd-2.2.8/server/mpm/experimental/itk/mpm.h
 ===================================================================
 --- /dev/null
-+++ httpd-2.2.6/server/mpm/experimental/itk/mpm.h
++++ httpd-2.2.8/server/mpm/experimental/itk/mpm.h
 @@ -0,0 +1,65 @@
 +/* Licensed to the Apache Software Foundation (ASF) under one or more
 + * contributor license agreements.  See the NOTICE file distributed with

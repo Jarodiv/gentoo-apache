@@ -1,19 +1,234 @@
-httpd-2.2.x-sni.patch - server name indication support for Apache 2.2 or later
-(cf. RFC 4366, "Transport Layer Security (TLS) Extensions")
+# httpd-2.2.x-sni.patch - server name indication support for Apache 2.2
+# (see RFC 4366, "Transport Layer Security (TLS) Extensions")
 
-Based on a patch from the EdelKey project (http://www.edelweb.fr/EdelKey/),
-which is used with permission from its author.
+# based on a patch from the EdelKey project
+# (http://www.edelweb.fr/EdelKey/files/apache-2.2.0+0.9.9+servername.patch)
 
-Index: httpd-2.2.6/modules/ssl/ssl_engine_init.c
+# Needs openssl-SNAP-20060330 / OpenSSL 0.9.8f or later
+# to work properly (ftp://ftp.openssl.org/snapshot/). The 0.9.8 versions
+# must be configured explicitly for TLS extension support at compile time
+# ("./config enable-tlsext").
+
+Index: httpd-2.2.8/modules/ssl/ssl_private.h
 ===================================================================
---- httpd-2.2.6.orig/modules/ssl/ssl_engine_init.c
-+++ httpd-2.2.6/modules/ssl/ssl_engine_init.c
-@@ -135,6 +135,87 @@ static int ssl_tmp_keys_init(server_rec 
-     return OK;
+--- httpd-2.2.8.orig/modules/ssl/ssl_private.h
++++ httpd-2.2.8/modules/ssl/ssl_private.h
+@@ -35,6 +35,7 @@
+ #include "http_connection.h"
+ #include "http_request.h"
+ #include "http_protocol.h"
++#include "http_vhost.h"
+ #include "util_script.h"
+ #include "util_filter.h"
+ #include "util_ebcdic.h"
+@@ -555,6 +556,9 @@ int          ssl_callback_NewSessionCach
+ SSL_SESSION *ssl_callback_GetSessionCacheEntry(SSL *, unsigned char *, int, int *);
+ void         ssl_callback_DelSessionCacheEntry(SSL_CTX *, SSL_SESSION *);
+ void         ssl_callback_LogTracingState(MODSSL_INFO_CB_ARG_TYPE, int, int);
++#ifndef OPENSSL_NO_TLSEXT
++int          ssl_callback_ServerNameIndication(SSL *, int *, modssl_ctx_t *);
++#endif
+ 
+ /**  Session Cache Support  */
+ void         ssl_scache_init(server_rec *, apr_pool_t *);
+Index: httpd-2.2.8/modules/ssl/ssl_engine_init.c
+===================================================================
+--- httpd-2.2.8.orig/modules/ssl/ssl_engine_init.c
++++ httpd-2.2.8/modules/ssl/ssl_engine_init.c
+@@ -355,6 +355,33 @@ static void ssl_init_server_check(server
+     }
  }
  
 +#ifndef OPENSSL_NO_TLSEXT
-+static int set_ssl_vhost(void *servername, conn_rec *c, server_rec *s) 
++static void ssl_init_ctx_tls_extensions(server_rec *s,
++                                        apr_pool_t *p,
++                                        apr_pool_t *ptemp,
++                                        modssl_ctx_t *mctx)
++{
++    /*
++     * Configure TLS extensions support
++     */
++    ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
++                 "Configuring TLS extension handling");
++
++    /*
++     * Server name indication (SNI)
++     */
++    if (!SSL_CTX_set_tlsext_servername_callback(mctx->ssl_ctx,
++                          ssl_callback_ServerNameIndication) ||
++        !SSL_CTX_set_tlsext_servername_arg(mctx->ssl_ctx, mctx)) {
++        ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
++                     "Unable to initialize TLS servername extension "
++                     "callback (incompatible OpenSSL version?)");
++        ssl_log_ssl_error(APLOG_MARK, APLOG_ERR, s);
++        ssl_die();
++    }
++}
++#endif
++
+ static void ssl_init_ctx_protocol(server_rec *s,
+                                   apr_pool_t *p,
+                                   apr_pool_t *ptemp,
+@@ -687,6 +714,9 @@ static void ssl_init_ctx(server_rec *s,
+     if (mctx->pks) {
+         /* XXX: proxy support? */
+         ssl_init_ctx_cert_chain(s, p, ptemp, mctx);
++#ifndef OPENSSL_NO_TLSEXT
++        ssl_init_ctx_tls_extensions(s, p, ptemp, mctx);
++#endif
+     }
+ }
+ 
+@@ -1038,7 +1068,11 @@ void ssl_init_CheckServers(server_rec *b
+         if ((ps = (server_rec *)apr_hash_get(table, key, klen))) {
+             ap_log_error(APLOG_MARK, APLOG_WARNING, 0,
+                          base_server,
++#ifdef OPENSSL_NO_TLSEXT
+                          "Init: SSL server IP/port conflict: "
++#else
++                         "Init: SSL server IP/port overlap: "
++#endif
+                          "%s (%s:%d) vs. %s (%s:%d)",
+                          ssl_util_vhostid(p, s),
+                          (s->defn_name ? s->defn_name : "unknown"),
+@@ -1055,8 +1089,14 @@ void ssl_init_CheckServers(server_rec *b
+ 
+     if (conflict) {
+         ap_log_error(APLOG_MARK, APLOG_WARNING, 0, base_server,
++#ifdef OPENSSL_NO_TLSEXT
+                      "Init: You should not use name-based "
+                      "virtual hosts in conjunction with SSL!!");
++#else
++                     "Init: Name-based SSL virtual hosts only "
++                     "work for clients with TLS server name indication "
++                     "support (RFC 4366)");
++#endif
+     }
+ }
+ 
+Index: httpd-2.2.8/modules/ssl/ssl_engine_vars.c
+===================================================================
+--- httpd-2.2.8.orig/modules/ssl/ssl_engine_vars.c
++++ httpd-2.2.8/modules/ssl/ssl_engine_vars.c
+@@ -320,6 +320,12 @@ static char *ssl_var_lookup_ssl(apr_pool
+     else if (ssl != NULL && strcEQ(var, "COMPRESS_METHOD")) {
+         result = ssl_var_lookup_ssl_compress_meth(ssl);
+     }
++#ifndef OPENSSL_NO_TLSEXT
++    else if (ssl != NULL && strcEQ(var, "TLS_SNI")) {
++        result = apr_pstrdup(p, SSL_get_servername(ssl,
++                                                   TLSEXT_NAMETYPE_host_name));
++    }
++#endif
+     return result;
+ }
+ 
+Index: httpd-2.2.8/modules/ssl/ssl_engine_kernel.c
+===================================================================
+--- httpd-2.2.8.orig/modules/ssl/ssl_engine_kernel.c
++++ httpd-2.2.8/modules/ssl/ssl_engine_kernel.c
+@@ -31,6 +31,9 @@
+ #include "ssl_private.h"
+ 
+ static void ssl_configure_env(request_rec *r, SSLConnRec *sslconn);
++#ifndef OPENSSL_NO_TLSEXT
++static int ssl_find_vhost(void *servername, conn_rec *c, server_rec *s);
++#endif
+ 
+ /*
+  *  Post Read Request Handler
+@@ -39,6 +42,9 @@ int ssl_hook_ReadReq(request_rec *r)
+ {
+     SSLConnRec *sslconn = myConnConfig(r->connection);
+     SSL *ssl;
++#ifndef OPENSSL_NO_TLSEXT
++    const char *servername;
++#endif
+ 
+     if (!sslconn) {
+         return DECLINED;
+@@ -87,6 +93,14 @@ int ssl_hook_ReadReq(request_rec *r)
+     if (!ssl) {
+         return DECLINED;
+     }
++#ifndef OPENSSL_NO_TLSEXT
++    if (!r->hostname &&
++        (servername = SSL_get_servername(ssl, TLSEXT_NAMETYPE_host_name))) {
++        /* Use the SNI extension as the hostname if no Host: header was sent */
++        r->hostname = apr_pstrdup(r->pool, servername);
++        ap_update_vhost_from_headers(r);
++    }
++#endif
+     SSL_set_app_data2(ssl, r);
+ 
+     /*
+@@ -997,6 +1011,9 @@ int ssl_hook_Fixup(request_rec *r)
+     SSLDirConfigRec *dc = myDirConfig(r);
+     apr_table_t *env = r->subprocess_env;
+     char *var, *val = "";
++#ifndef OPENSSL_NO_TLSEXT
++    const char *servername;
++#endif
+     STACK_OF(X509) *peer_certs;
+     SSL *ssl;
+     int i;
+@@ -1018,6 +1035,13 @@ int ssl_hook_Fixup(request_rec *r)
+     /* the always present HTTPS (=HTTP over SSL) flag! */
+     apr_table_setn(env, "HTTPS", "on");
+ 
++#ifndef OPENSSL_NO_TLSEXT
++    /* add content of SNI TLS extension (if supplied with ClientHello) */
++    if ((servername = SSL_get_servername(ssl, TLSEXT_NAMETYPE_host_name))) {
++        apr_table_set(env, "SSL_TLS_SNI", servername);
++    }
++#endif
++
+     /* standard SSL environment variables */
+     if (dc->nOptions & SSL_OPT_STDENVVARS) {
+         for (i = 0; ssl_hook_Fixup_vars[i]; i++) {
+@@ -1810,3 +1834,118 @@ void ssl_callback_LogTracingState(MODSSL
+     }
+ }
+ 
++#ifndef OPENSSL_NO_TLSEXT
++/*
++ * This callback function is executed when OpenSSL encounters an extended
++ * client hello with a server name indication extension ("SNI", cf. RFC 4366).
++ */
++int ssl_callback_ServerNameIndication(SSL *ssl, int *al, modssl_ctx_t *mctx)
++{
++    const char *servername =
++                SSL_get_servername(ssl, TLSEXT_NAMETYPE_host_name);
++
++    if (servername) {
++        conn_rec *c = (conn_rec *)SSL_get_app_data(ssl);
++        if (c) {
++            if (ap_vhost_iterate_given_conn(c, ssl_find_vhost,
++                                            (void *)servername)) {
++                ap_log_cerror(APLOG_MARK, APLOG_DEBUG, 0, c,
++                              "SSL virtual host for servername %s found",
++                              servername);
++                return SSL_TLSEXT_ERR_OK;
++            }
++            else {
++                ap_log_cerror(APLOG_MARK, APLOG_DEBUG, 0, c,
++                              "No matching SSL virtual host for servername "
++                              "%s found (using default/first virtual host)",
++                              servername);
++                return SSL_TLSEXT_ERR_ALERT_WARNING;
++            }
++        }
++    }
++
++    return SSL_TLSEXT_ERR_NOACK;
++}
++
++/*
++ * Find a (name-based) SSL virtual host where either the ServerName
++ * or one of the ServerAliases matches the supplied name (to be used
++ * with ap_vhost_iterate_given_conn())
++ */
++static int ssl_find_vhost(void *servername, conn_rec *c, server_rec *s) 
 +{
 +    SSLSrvConfigRec *sc;
 +    SSL *ssl;
@@ -22,16 +237,21 @@ Index: httpd-2.2.6/modules/ssl/ssl_engine_init.c
 +    int i;
 +
 +    /* check ServerName */
-+    if (!strcasecmp(servername, s->server_hostname))
++    if (!strcasecmp(servername, s->server_hostname)) {
 +        found = TRUE;
++    }
 +
-+    /* if not matched yet, check ServerAlias entries */
++    /* 
++     * if not matched yet, check ServerAlias entries
++     * (adapted from vhost.c:matches_aliases())
++     */
 +    if (!found) {
 +        names = s->names;
 +        if (names) {
-+            char **name = (char **) names->elts;
++            char **name = (char **)names->elts;
 +            for (i = 0; i < names->nelts; ++i) {
-+                if(!name[i]) continue;
++                if (!name[i])
++                    continue;
 +                if (!strcasecmp(servername, name[i])) {
 +                    found = TRUE;
 +                    break;
@@ -44,9 +264,10 @@ Index: httpd-2.2.6/modules/ssl/ssl_engine_init.c
 +    if (!found) {
 +        names = s->wild_names;
 +        if (names) {
-+            char **name = (char **) names->elts;
++            char **name = (char **)names->elts;
 +            for (i = 0; i < names->nelts; ++i) {
-+                if(!name[i]) continue;
++                if (!name[i])
++                    continue;
 +                if (!ap_strcasecmp_match(servername, name[i])) {
 +                    found = TRUE;
 +                    break;
@@ -56,153 +277,39 @@ Index: httpd-2.2.6/modules/ssl/ssl_engine_init.c
 +    }
 +
 +    /* set SSL_CTX (if matched) */
-+    if (found) {
-+        if ((ssl = ((SSLConnRec *)myConnConfig(c))->ssl) == NULL) 
-+            return 0;
-+        if (!(sc = mySrvConfig(s)))
-+            return 0;	
-+        SSL_set_SSL_CTX(ssl,sc->server->ssl_ctx);
++    if (found && (ssl = ((SSLConnRec *)myConnConfig(c))->ssl) &&
++        (sc = mySrvConfig(s))) {
++        SSL_set_SSL_CTX(ssl, sc->server->ssl_ctx);
++        /*
++         * SSL_set_SSL_CTX() only deals with the server cert,
++         * so we need to duplicate a few additional settings
++         * from the ctx by hand
++         */
++        SSL_set_options(ssl, SSL_CTX_get_options(ssl->ctx));
++        if ((SSL_get_verify_mode(ssl) == SSL_VERIFY_NONE) ||
++            (SSL_num_renegotiations(ssl) == 0)) {
++           /*
++            * Only initialize the verification settings from the ctx
++            * if they are not yet set, or if we're called when a new
++            * SSL connection is set up (num_renegotiations == 0).
++            * Otherwise, we would possibly reset a per-directory
++            * configuration which was put into effect by ssl_hook_Access.
++            */
++            SSL_set_verify(ssl, SSL_CTX_get_verify_mode(ssl->ctx),
++                           SSL_CTX_get_verify_callback(ssl->ctx));
++        }
++
 +        return 1;
 +    }
++
 +    return 0;
 +}
-+
-+int ssl_set_vhost_ctx(SSL *ssl, const char *servername) 
-+{
-+    conn_rec *c;
-+
-+    if (servername == NULL)   /* should not occur. */
-+        return 0;
-+
-+    SSL_set_SSL_CTX(ssl,NULL);
-+
-+    if (!(c = (conn_rec *)SSL_get_app_data(ssl))) 
-+        return 0;
-+
-+    return ap_vhost_iterate_given_conn(c,set_ssl_vhost,servername);
-+}
-+
-+int ssl_servername_cb(SSL *s, int *al, modssl_ctx_t *mctx)
-+{
-+    const char *servername = SSL_get_servername(s,TLSEXT_NAMETYPE_host_name);
-+
-+    if (servername) {
-+        return ssl_set_vhost_ctx(s,servername)?SSL_TLSEXT_ERR_OK:SSL_TLSEXT_ERR_ALERT_FATAL;
-+    }
-+    return SSL_TLSEXT_ERR_NOACK;
-+}
 +#endif
-+
- /*
-  *  Per-module initialization
-  */
-@@ -355,6 +436,29 @@ static void ssl_init_server_check(server
-     }
- }
- 
-+static void ssl_init_server_extensions(server_rec *s,
-+                             apr_pool_t *p,
-+                             apr_pool_t *ptemp,
-+                             modssl_ctx_t *mctx)
-+{
-+    /*
-+     * Configure TLS extensions support
-+     */
-+
-+#ifndef OPENSSL_NO_TLSEXT
-+    ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
-+                 "Configuring TLS extensions facility");
-+
-+    if (!SSL_CTX_set_tlsext_servername_callback(mctx->ssl_ctx, ssl_servername_cb) ||
-+        !SSL_CTX_set_tlsext_servername_arg(mctx->ssl_ctx, mctx)) {
-+        ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
-+                "Unable to initialize servername callback, bad openssl version.");
-+        ssl_log_ssl_error(APLOG_MARK, APLOG_ERR, s);
-+        ssl_die();
-+    }
-+#endif
-+}
-+
- static void ssl_init_ctx_protocol(server_rec *s,
-                                   apr_pool_t *p,
-                                   apr_pool_t *ptemp,
-@@ -688,6 +792,8 @@ static void ssl_init_ctx(server_rec *s,
-         /* XXX: proxy support? */
-         ssl_init_ctx_cert_chain(s, p, ptemp, mctx);
-     }
-+
-+    ssl_init_server_extensions(s, p, ptemp, mctx);
- }
- 
- static int ssl_server_import_cert(server_rec *s,
-@@ -1014,6 +1120,7 @@ void ssl_init_CheckServers(server_rec *b
-         }
-     }
- 
-+#ifdef OPENSSL_NO_TLSEXT
-     /*
-      * Give out warnings when more than one SSL-aware virtual server uses the
-      * same IP:port. This doesn't work because mod_ssl then will always use
-@@ -1058,6 +1165,7 @@ void ssl_init_CheckServers(server_rec *b
-                      "Init: You should not use name-based "
-                      "virtual hosts in conjunction with SSL!!");
-     }
-+#endif
- }
- 
- #ifdef SSLC_VERSION_NUMBER
-Index: httpd-2.2.6/modules/ssl/ssl_engine_kernel.c
+Index: httpd-2.2.8/modules/ssl/ssl_toolkit_compat.h
 ===================================================================
---- httpd-2.2.6.orig/modules/ssl/ssl_engine_kernel.c
-+++ httpd-2.2.6/modules/ssl/ssl_engine_kernel.c
-@@ -231,6 +231,19 @@ int ssl_hook_Access(request_rec *r)
-      * the currently active one.
-      */
- 
-+#ifndef OPENSSL_NO_TLSEXT
-+    /*
-+     * We will switch to another virtualhost and to its ssl_ctx
-+     * if changed, we will force a renegotiation.
-+     */
-+    if (r->hostname && !SSL_get_servername(ssl, TLSEXT_NAMETYPE_host_name)) {
-+        SSL_CTX *ctx = SSL_get_SSL_CTX(ssl);
-+        if (ssl_set_vhost_ctx(ssl,(char *)r->hostname) &&
-+            ctx != SSL_get_SSL_CTX(ssl))
-+            renegotiate = TRUE;
-+    }
-+#endif
-+
-     /*
-      * Override of SSLCipherSuite
-      *
-@@ -997,6 +1010,9 @@ int ssl_hook_Fixup(request_rec *r)
-     SSLDirConfigRec *dc = myDirConfig(r);
-     apr_table_t *env = r->subprocess_env;
-     char *var, *val = "";
-+#ifndef OPENSSL_NO_TLSEXT
-+    const char* servername;
-+#endif
-     STACK_OF(X509) *peer_certs;
-     SSL *ssl;
-     int i;
-@@ -1018,6 +1034,12 @@ int ssl_hook_Fixup(request_rec *r)
-     /* the always present HTTPS (=HTTP over SSL) flag! */
-     apr_table_setn(env, "HTTPS", "on");
- 
-+#ifndef OPENSSL_NO_TLSEXT
-+    /* add content of SNI TLS extension (if supplied with ClientHello) */
-+    if (servername = SSL_get_servername(ssl, TLSEXT_NAMETYPE_host_name))
-+	apr_table_set(env, "TLS_SNI", servername);
-+#endif
-+
-     /* standard SSL environment variables */
-     if (dc->nOptions & SSL_OPT_STDENVVARS) {
-         for (i = 0; ssl_hook_Fixup_vars[i]; i++) {
-Index: httpd-2.2.6/modules/ssl/ssl_toolkit_compat.h
-===================================================================
---- httpd-2.2.6.orig/modules/ssl/ssl_toolkit_compat.h
-+++ httpd-2.2.6/modules/ssl/ssl_toolkit_compat.h
-@@ -258,6 +258,12 @@ typedef void (*modssl_popfree_fn)(char *
+--- httpd-2.2.8.orig/modules/ssl/ssl_toolkit_compat.h
++++ httpd-2.2.8/modules/ssl/ssl_toolkit_compat.h
+@@ -264,6 +264,12 @@ typedef void (*modssl_popfree_fn)(char *
  #define SSL_SESS_CACHE_NO_INTERNAL  SSL_SESS_CACHE_NO_INTERNAL_LOOKUP
  #endif
  
@@ -215,76 +322,3 @@ Index: httpd-2.2.6/modules/ssl/ssl_toolkit_compat.h
  #endif /* SSL_TOOLKIT_COMPAT_H */
  
  /** @} */
-Index: httpd-2.2.6/modules/ssl/ssl_engine_io.c
-===================================================================
---- httpd-2.2.6.orig/modules/ssl/ssl_engine_io.c
-+++ httpd-2.2.6/modules/ssl/ssl_engine_io.c
-@@ -1541,14 +1541,25 @@ int ssl_io_buffer_fill(request_rec *r)
- 
-     apr_brigade_destroy(tempb);
- 
--    /* Insert the filter which will supply the buffered data. */
-+    /* After consuming all protocol-level input, remove all protocol-level
-+     * filters.  It should strictly only be necessary to remove filters
-+     * at exactly ftype == AP_FTYPE_PROTOCOL, since this filter will 
-+     * precede all > AP_FTYPE_PROTOCOL anyway. */
-+    while (r->proto_input_filters->frec->ftype < AP_FTYPE_CONNECTION) {
-+        ap_remove_input_filter(r->proto_input_filters);
-+    }
-+
-+    /* Insert the filter which will supply the buffered content. */
-     ap_add_input_filter(ssl_io_buffer, ctx, r, c);
- 
-     return 0;
- }
- 
- /* This input filter supplies the buffered request body to the caller
-- * from the brigade stored in f->ctx. */
-+ * from the brigade stored in f->ctx.  Note that the placement of this
-+ * filter in the filter stack is important; it must be the first
-+ * r->proto_input_filter; lower-typed filters will not be preserved
-+ * across internal redirects (see PR 43738).  */
- static apr_status_t ssl_io_filter_buffer(ap_filter_t *f,
-                                          apr_bucket_brigade *bb,
-                                          ap_input_mode_t mode,
-@@ -1567,6 +1578,19 @@ static apr_status_t ssl_io_filter_buffer
-         return APR_ENOTIMPL;
-     }
- 
-+    if (APR_BRIGADE_EMPTY(ctx->bb)) {
-+        /* Suprisingly (and perhaps, wrongly), the request body can be
-+         * pulled from the input filter stack more than once; a
-+         * handler may read it, and ap_discard_request_body() will
-+         * attempt to do so again after *every* request.  So input
-+         * filters must be prepared to give up an EOS if invoked after
-+         * initially reading the request. The HTTP_IN filter does this
-+         * with its ->eos_sent flag. */
-+
-+        APR_BRIGADE_INSERT_TAIL(bb, apr_bucket_eos_create(f->c->bucket_alloc));
-+        return APR_SUCCESS;
-+    }
-+
-     if (mode == AP_MODE_READBYTES) {
-         apr_bucket *e;
- 
-@@ -1621,8 +1645,9 @@ static apr_status_t ssl_io_filter_buffer
-         }
- 
-         ap_log_cerror(APLOG_MARK, APLOG_DEBUG, 0, f->c,
--                      "buffered SSL brigade now exhausted; removing filter");
--        ap_remove_input_filter(f);
-+                      "buffered SSL brigade exhausted");
-+        /* Note that the filter must *not* be removed here; it may be
-+         * invoked again, see comment above. */
-     }
- 
-     return APR_SUCCESS;
-@@ -1691,7 +1716,7 @@ void ssl_io_filter_register(apr_pool_t *
-     ap_register_input_filter  (ssl_io_filter, ssl_io_filter_input,  NULL, AP_FTYPE_CONNECTION + 5);
-     ap_register_output_filter (ssl_io_filter, ssl_io_filter_output, NULL, AP_FTYPE_CONNECTION + 5);
- 
--    ap_register_input_filter  (ssl_io_buffer, ssl_io_filter_buffer, NULL, AP_FTYPE_PROTOCOL - 1);
-+    ap_register_input_filter  (ssl_io_buffer, ssl_io_filter_buffer, NULL, AP_FTYPE_PROTOCOL);
- 
-     return;
- }
