@@ -1,4 +1,3 @@
-Provide escaping for the ampersand in mod_rewrite
 Index: httpd-2.2.8/modules/mappers/mod_rewrite.c
 ===================================================================
 --- httpd-2.2.8.orig/modules/mappers/mod_rewrite.c
@@ -7,29 +6,29 @@ Index: httpd-2.2.8/modules/mappers/mod_rewrite.c
      return ap_escape_uri(r->pool, key);
  }
  
-+static char *rewrite_mapfunc_ampescape(request_rec *r, char *key) {
-+	/* we only need to escape the ampersand */
++static char *rewrite_mapfunc_ampescape(request_rec *r, char *key)
++{
++    /* we only need to escape the ampersand */
++    unsigned char *copy = (char *)apr_palloc(r->pool, 3 * strlen(key) + 3);
++    const unsigned char *s = (const unsigned char *)key;
++    unsigned char *d = (unsigned char *)copy;
++    unsigned c;
 +
-+	unsigned char *copy = (char *)apr_palloc(r->pool, 3 * strlen(key) + 3);
-+	const unsigned char *s = (const unsigned char *)key;
-+	unsigned char *d = (unsigned char *)copy;
-+	unsigned c;
++    while ((c = *s)) {
++        if (c == '&') {
++            *d++ = '%';
++            *d++ = '2';
++            *d++ = '6';
++        }
++        else {
++            *d++ = c;
++        }
++        ++s;
++    }
++    *d = '\0';
 +
-+	while ((c = *s)) {
-+		if (c == '&') {
-+			*d++ = '%';
-+			*d++ = '2';
-+			*d++ = '6';
-+		} else {
-+			*d++ = c;
-+		}
-+		++s;
-+	}
-+	*d = '\0';
-+
-+	return copy;
++    return copy;
 +}
-+
 +
  static char *rewrite_mapfunc_unescape(request_rec *r, char *key)
  {
@@ -38,7 +37,7 @@ Index: httpd-2.2.8/modules/mappers/mod_rewrite.c
          map_pfn_register("tolower", rewrite_mapfunc_tolower);
          map_pfn_register("toupper", rewrite_mapfunc_toupper);
          map_pfn_register("escape", rewrite_mapfunc_escape);
-+		map_pfn_register("ampescape", rewrite_mapfunc_ampescape);
++        map_pfn_register("ampescape", rewrite_mapfunc_ampescape);
          map_pfn_register("unescape", rewrite_mapfunc_unescape);
      }
      return OK;
