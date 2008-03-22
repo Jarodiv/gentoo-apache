@@ -17,6 +17,9 @@ configtest() {
 }
 
 checkconfd() {
+	PIDFILE="${PIDFILE:-/var/run/apache2.pid}"
+	TIMEOUT=${TIMEOUT:-10}
+
 	SERVERROOT="${SERVERROOT:-/usr/lib/apache2}"
 	if [ ! -d ${SERVERROOT} ]; then
 		eerror "SERVERROOT does not exist: ${SERVERROOT}"
@@ -52,17 +55,33 @@ checkconfig() {
 
 start() {
 	checkconfig || return 1
-	ebegin "Starting apache2"
+
 	[ -f /var/log/apache2/ssl_scache ] && rm /var/log/apache2/ssl_scache
 
+	ebegin "Starting apache2"
 	${APACHE2} ${APACHE2_OPTS} -k start
+
+	let i=0
+	while [ ! -e "${PIDFILE}" ] && [ $i -lt ${TIMEOUT} ]; do
+		sleep 1 && let i++
+	done
+
+	test $i -le ${TIMEOUT}
 	eend $?
 }
 
 stop() {
 	checkconfd || return 1
+
 	ebegin "Stopping apache2"
 	${APACHE2} ${APACHE2_OPTS} -k stop
+
+	let i=0
+	while pidof "${APACHE2}" >/dev/null && [ $i -lt ${TIMEOUT} ]; do
+		sleep 1 && let i++
+	done
+
+	test $i -le ${TIMEOUT}
 	eend $?
 }
 
@@ -102,7 +121,7 @@ gracefulstop() {
 	fi
 
 	ebegin "Gracefully stopping apache2"
-	${APACHE2} ${APACHE2_OPTS} -k gracefulstop
+	${APACHE2} ${APACHE2_OPTS} -k graceful-stop
 	eend $?
 }
 
@@ -116,9 +135,13 @@ fullstatus() {
 	LYNX="${LYNX:-lynx -dump}"
 	STATUSURL="${STATUSURL:-http://localhost/server-status}"
 
-	if ! type -p ${LYNX} 2>&1 >/dev/null; then
+	if ! service_started "${SVCNAME}"; then
+		eerror "${SVCNAME} not started"
+	elif ! type -p ${LYNX} 2>&1 >/dev/null; then
 		eerror "lynx not found! you need to emerge www-client/lynx"
 	else
 		${LYNX} ${STATUSURL}
 	fi
 }
+
+# vim: ts=4 filetype=gentoo-init-d
