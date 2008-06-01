@@ -2,7 +2,7 @@
 # Copyright 1999-2007 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
 
-opts="configtest fullstatus graceful gracefulstop modules reload"
+opts="configdump configtest fullstatus graceful gracefulstop modules reload"
 
 depend() {
 	need net
@@ -141,6 +141,24 @@ fullstatus() {
 		eerror "lynx not found! you need to emerge www-client/lynx"
 	else
 		${LYNX} ${STATUSURL}
+	fi
+}
+
+configdump() {
+	LYNX="${LYNX:-lynx -dump}"
+	INFOURL="${INFOURL:-http://localhost/server-info}"
+
+	checkconfd || return 1
+
+	if ! service_started "${SVCNAME}"; then
+		eerror "${SVCNAME} not started"
+	elif ! type -p ${LYNX} 2>&1 >/dev/null; then
+		eerror "lynx not found! you need to emerge www-client/lynx"
+	else
+		echo "${APACHE2} started with '${APACHE2_OPTS}'"
+		for i in config server list; do
+			${LYNX} "${INFOURL}/?${i}" | sed '/Apache Server Information/d;/^[[:space:]]\+[_]\+$/Q'
+		done
 	fi
 }
 
