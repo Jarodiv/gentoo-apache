@@ -9,10 +9,10 @@
 # must be configured explicitly for TLS extension support at compile time
 # ("./config enable-tlsext").
 
-Index: httpd-2.2.8/modules/ssl/ssl_private.h
+Index: httpd-2.2.x/modules/ssl/ssl_private.h
 ===================================================================
---- httpd-2.2.8.orig/modules/ssl/ssl_private.h
-+++ httpd-2.2.8/modules/ssl/ssl_private.h
+--- httpd-2.2.x/modules/ssl/ssl_private.h	(revision 663014)
++++ httpd-2.2.x/modules/ssl/ssl_private.h	(working copy)
 @@ -35,6 +35,7 @@
  #include "http_connection.h"
  #include "http_request.h"
@@ -31,10 +31,10 @@ Index: httpd-2.2.8/modules/ssl/ssl_private.h
  
  /**  Session Cache Support  */
  void         ssl_scache_init(server_rec *, apr_pool_t *);
-Index: httpd-2.2.8/modules/ssl/ssl_engine_init.c
+Index: httpd-2.2.x/modules/ssl/ssl_engine_init.c
 ===================================================================
---- httpd-2.2.8.orig/modules/ssl/ssl_engine_init.c
-+++ httpd-2.2.8/modules/ssl/ssl_engine_init.c
+--- httpd-2.2.x/modules/ssl/ssl_engine_init.c	(revision 663014)
++++ httpd-2.2.x/modules/ssl/ssl_engine_init.c	(working copy)
 @@ -355,6 +355,33 @@ static void ssl_init_server_check(server
      }
  }
@@ -79,9 +79,18 @@ Index: httpd-2.2.8/modules/ssl/ssl_engine_init.c
      }
  }
  
-@@ -1038,7 +1068,11 @@ void ssl_init_CheckServers(server_rec *b
+@@ -1036,9 +1066,19 @@ void ssl_init_CheckServers(server_rec *b
+         klen = strlen(key);
+ 
          if ((ps = (server_rec *)apr_hash_get(table, key, klen))) {
-             ap_log_error(APLOG_MARK, APLOG_WARNING, 0,
+-            ap_log_error(APLOG_MARK, APLOG_WARNING, 0,
++            ap_log_error(APLOG_MARK, 
++#ifdef OPENSSL_NO_TLSEXT
++                         APLOG_WARNING, 
++#else
++                         APLOG_DEBUG, 
++#endif
++                         0,
                           base_server,
 +#ifdef OPENSSL_NO_TLSEXT
                           "Init: SSL server IP/port conflict: "
@@ -91,7 +100,7 @@ Index: httpd-2.2.8/modules/ssl/ssl_engine_init.c
                           "%s (%s:%d) vs. %s (%s:%d)",
                           ssl_util_vhostid(p, s),
                           (s->defn_name ? s->defn_name : "unknown"),
-@@ -1055,8 +1089,14 @@ void ssl_init_CheckServers(server_rec *b
+@@ -1055,8 +1095,14 @@ void ssl_init_CheckServers(server_rec *b
  
      if (conflict) {
          ap_log_error(APLOG_MARK, APLOG_WARNING, 0, base_server,
@@ -106,10 +115,10 @@ Index: httpd-2.2.8/modules/ssl/ssl_engine_init.c
      }
  }
  
-Index: httpd-2.2.8/modules/ssl/ssl_engine_vars.c
+Index: httpd-2.2.x/modules/ssl/ssl_engine_vars.c
 ===================================================================
---- httpd-2.2.8.orig/modules/ssl/ssl_engine_vars.c
-+++ httpd-2.2.8/modules/ssl/ssl_engine_vars.c
+--- httpd-2.2.x/modules/ssl/ssl_engine_vars.c	(revision 663014)
++++ httpd-2.2.x/modules/ssl/ssl_engine_vars.c	(working copy)
 @@ -320,6 +320,12 @@ static char *ssl_var_lookup_ssl(apr_pool
      else if (ssl != NULL && strcEQ(var, "COMPRESS_METHOD")) {
          result = ssl_var_lookup_ssl_compress_meth(ssl);
@@ -123,10 +132,10 @@ Index: httpd-2.2.8/modules/ssl/ssl_engine_vars.c
      return result;
  }
  
-Index: httpd-2.2.8/modules/ssl/ssl_engine_kernel.c
+Index: httpd-2.2.x/modules/ssl/ssl_engine_kernel.c
 ===================================================================
---- httpd-2.2.8.orig/modules/ssl/ssl_engine_kernel.c
-+++ httpd-2.2.8/modules/ssl/ssl_engine_kernel.c
+--- httpd-2.2.x/modules/ssl/ssl_engine_kernel.c	(revision 663014)
++++ httpd-2.2.x/modules/ssl/ssl_engine_kernel.c	(working copy)
 @@ -31,6 +31,9 @@
  #include "ssl_private.h"
  
@@ -162,7 +171,31 @@ Index: httpd-2.2.8/modules/ssl/ssl_engine_kernel.c
      SSL_set_app_data2(ssl, r);
  
      /*
-@@ -997,6 +1011,9 @@ int ssl_hook_Fixup(request_rec *r)
+@@ -353,6 +367,11 @@ int ssl_hook_Access(request_rec *r)
+      * currently active/remembered verify depth (because this means more
+      * restriction on the certificate chain).
+      */
++    if ((sc->server->auth.verify_depth != UNSET) &&
++        (dc->nVerifyDepth == UNSET)) {
++        /* apply per-vhost setting, if per-directory config is not set */
++        dc->nVerifyDepth = sc->server->auth.verify_depth;
++    }
+     if (dc->nVerifyDepth != UNSET) {
+         /* XXX: doesnt look like sslconn->verify_depth is actually used */
+         if (!(n = sslconn->verify_depth)) {
+@@ -382,6 +401,11 @@ int ssl_hook_Access(request_rec *r)
+      * verification but at least skip the I/O-intensive renegotation
+      * handshake.
+      */
++    if ((sc->server->auth.verify_mode != SSL_CVERIFY_UNSET) &&
++        (dc->nVerifyClient == SSL_CVERIFY_UNSET)) {
++        /* apply per-vhost setting, if per-directory config is not set */
++        dc->nVerifyClient = sc->server->auth.verify_mode;
++    }
+     if (dc->nVerifyClient != SSL_CVERIFY_UNSET) {
+         /* remember old state */
+         verify_old = SSL_get_verify_mode(ssl);
+@@ -997,6 +1021,9 @@ int ssl_hook_Fixup(request_rec *r)
      SSLDirConfigRec *dc = myDirConfig(r);
      apr_table_t *env = r->subprocess_env;
      char *var, *val = "";
@@ -172,7 +205,7 @@ Index: httpd-2.2.8/modules/ssl/ssl_engine_kernel.c
      STACK_OF(X509) *peer_certs;
      SSL *ssl;
      int i;
-@@ -1018,6 +1035,13 @@ int ssl_hook_Fixup(request_rec *r)
+@@ -1018,6 +1045,13 @@ int ssl_hook_Fixup(request_rec *r)
      /* the always present HTTPS (=HTTP over SSL) flag! */
      apr_table_setn(env, "HTTPS", "on");
  
@@ -186,7 +219,7 @@ Index: httpd-2.2.8/modules/ssl/ssl_engine_kernel.c
      /* standard SSL environment variables */
      if (dc->nOptions & SSL_OPT_STDENVVARS) {
          for (i = 0; ssl_hook_Fixup_vars[i]; i++) {
-@@ -1810,3 +1834,118 @@ void ssl_callback_LogTracingState(MODSSL
+@@ -1810,3 +1844,141 @@ void ssl_callback_LogTracingState(MODSSL
      }
  }
  
@@ -299,16 +332,39 @@ Index: httpd-2.2.8/modules/ssl/ssl_engine_kernel.c
 +                           SSL_CTX_get_verify_callback(ssl->ctx));
 +        }
 +
++        /*
++         * We also need to make sure that the correct mctx
++         * (accessed through the c->base_server->module_config vector)
++         * is assigned to the connection - the CRL callback e.g.
++         * makes use of it for retrieving its store (mctx->crl).
++         * Since logging in callbacks uses c->base_server in many
++         * cases, it also ensures that these messages are routed
++         * to the proper log.
++         */
++        c->base_server = s;
++
++        /*
++         * There is one special filter callback, which is set
++         * very early depending on the base_server's log level.
++         * If this is not the first vhost we're now selecting
++         * (and the first vhost doesn't use APLOG_DEBUG), then
++         * we need to set that callback here.
++         */
++        if (c->base_server->loglevel >= APLOG_DEBUG) {
++            BIO_set_callback(SSL_get_rbio(ssl), ssl_io_data_cb);
++            BIO_set_callback_arg(SSL_get_rbio(ssl), (void *)ssl);
++        }
++
 +        return 1;
 +    }
 +
 +    return 0;
 +}
 +#endif
-Index: httpd-2.2.8/modules/ssl/ssl_toolkit_compat.h
+Index: httpd-2.2.x/modules/ssl/ssl_toolkit_compat.h
 ===================================================================
---- httpd-2.2.8.orig/modules/ssl/ssl_toolkit_compat.h
-+++ httpd-2.2.8/modules/ssl/ssl_toolkit_compat.h
+--- httpd-2.2.x/modules/ssl/ssl_toolkit_compat.h	(revision 663014)
++++ httpd-2.2.x/modules/ssl/ssl_toolkit_compat.h	(working copy)
 @@ -264,6 +264,12 @@ typedef void (*modssl_popfree_fn)(char *
  #define SSL_SESS_CACHE_NO_INTERNAL  SSL_SESS_CACHE_NO_INTERNAL_LOOKUP
  #endif
