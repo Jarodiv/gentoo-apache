@@ -1,0 +1,67 @@
+Index: server/core.c
+===================================================================
+--- server/core.c	(revision 779471)
++++ server/core.c	(revision 779472)
+@@ -661,7 +661,11 @@
+     core_dir_config *conf =
+       (core_dir_config *)ap_get_module_config(r->per_dir_config, &core_module);
+ 
+-    return conf->opts;
++    /* Per comment in http_core.h - the OPT_INC_WITH_EXEC bit is
++     * inverted, such that the exposed semantics match that of
++     * OPT_INCNOEXEC; i.e., the bit is only enabled if exec= is *not*
++     * permitted. */
++    return conf->opts ^ OPT_INC_WITH_EXEC;
+ }
+ 
+ AP_DECLARE(int) ap_allow_overrides(request_rec *r)
+Index: modules/filters/mod_include.c
+===================================================================
+--- modules/filters/mod_include.c	(revision 779471)
++++ modules/filters/mod_include.c	(revision 779472)
+@@ -3565,7 +3565,7 @@
+         intern->seen_eos = 0;
+         intern->state = PARSE_PRE_HEAD;
+         ctx->flags = (SSI_FLAG_PRINTING | SSI_FLAG_COND_TRUE);
+-        if ((ap_allow_options(r) & OPT_INC_WITH_EXEC) == 0) {
++        if (ap_allow_options(r) & OPT_INCNOEXEC) {
+             ctx->flags |= SSI_FLAG_NO_EXEC;
+         }
+         intern->accessenable = conf->accessenable;
+Index: include/http_core.h
+===================================================================
+--- include/http_core.h	(revision 779471)
++++ include/http_core.h	(revision 779472)
+@@ -73,16 +73,29 @@
+ #define OPT_EXECCGI 8
+ /**  directive unset */
+ #define OPT_UNSET 16
+-/**  SSI exec= permission is permitted, iff OPT_INCLUDES is also set */
+-#define OPT_INC_WITH_EXEC 32
++/**  IncludesNOEXEC directive */
++#define OPT_INCNOEXEC 32
+ /** SymLinksIfOwnerMatch directive */
+ #define OPT_SYM_OWNER 64
+ /** MultiViews directive */
+ #define OPT_MULTI 128
+ /**  All directives */
+-#define OPT_ALL (OPT_INDEXES|OPT_INCLUDES|OPT_INC_WITH_EXEC|OPT_SYM_LINKS|OPT_EXECCGI)
++#define OPT_ALL (OPT_INDEXES|OPT_INCLUDES|OPT_INCNOEXEC|OPT_SYM_LINKS|OPT_EXECCGI)
+ /** @} */
+ 
++#ifdef CORE_PRIVATE
++/* For internal use only - since 2.2.12, the OPT_INCNOEXEC bit is
++ * internally replaced by OPT_INC_WITH_EXEC.  The internal semantics
++ * of the two SSI-related bits are hence:
++ *
++ *  OPT_INCLUDES => "enable SSI, without exec= permission"
++ *  OPT_INC_WITH_EXEC => "iff OPT_INCLUDES is set, also enable exec="
++ *
++ * The set of options exposed via ap_allow_options() retains the
++ * semantics of OPT_INCNOEXEC by flipping the bit. */
++#define OPT_INC_WITH_EXEC OPT_INCNOEXEC
++#endif
++
+ /**
+  * @defgroup get_remote_host Remote Host Resolution 
+  * @ingroup APACHE_CORE_HTTPD
