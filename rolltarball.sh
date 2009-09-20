@@ -520,7 +520,7 @@ build_tarball() {
 		pretend && einfo "  Regenerate digests"
 		pretend || {
 			ebegin "Regenerating digests"
-			ebuild ${EBUILD} digest >&9
+			ebuild --force ${EBUILD} manifest >&9
 			eend $?
 		}
 	else
