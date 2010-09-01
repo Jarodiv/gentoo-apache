@@ -1,0 +1,13 @@
+diff -Nru httpd-2.2.16.orig/support/apxs.in httpd-2.2.16/support/apxs.in
+--- httpd-2.2.16.orig/support/apxs.in	2010-08-31 15:11:51.964281072 +0200
++++ httpd-2.2.16/support/apxs.in	2010-08-31 15:17:38.562895073 +0200
+@@ -430,6 +430,9 @@
+         $opt .= " -l$opt_l";
+     }
+ 
++    # Add LDFLAGS from environment:
++    $opt .= " $ENV{'LDFLAGS'}";
++
+     if ($opt_p == 1) {
+         
+         my $apr_libs=`$apr_config --cflags --ldflags --link-libtool --libs`;
