@@ -46,7 +46,7 @@ checkconfig() {
 	${APACHE2} ${APACHE2_OPTS} -t 1>/dev/null 2>&1
 	ret=$?
 	if [ $ret -ne 0 ]; then
-		eerror "${SVCNAME} has detected a syntax error in your configuration files:"
+		eerror "${SVCNAME} has detected an error in your setup:"
 		${APACHE2} ${APACHE2_OPTS} -t
 	fi
 
