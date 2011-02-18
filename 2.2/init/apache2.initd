@@ -4,6 +4,16 @@
 
 opts="configdump configtest fullstatus graceful gracefulstop modules reload virtualhosts"
 
+description_configdump="Dumps the configuration of the apache server. Requires lynx and server-info to be enabled."
+description_configtest="Run  syntax  tests for configuration files only."
+description_fullstatus="Gives the full status of the server. Requires lynx and server-status to be enabled."
+description_graceful="A graceful restart advises the children to exit after the current request and reloads the configuration."
+description_gracefulstop="A graceful stop advises the children to exit after the current request and stops the server."
+description_modules="Dump a list of loaded Static and Shared Modules."
+description_reload="Kills all children and reloads the configuration."
+description_virtualhosts="Show the settings as parsed from the config file (currently only shows the virtualhost settings)."
+description_stop="Kills all children and stops the server."
+
 depend() {
 	need net
 	use mysql dns logger netmount postgresql
@@ -66,7 +76,7 @@ start() {
 		sleep 1 && i=$(expr $i + 1)
 	done
 
-	test $i -le ${TIMEOUT}
+	test -e "${PIDFILE}"
 	eend $?
 }
 
