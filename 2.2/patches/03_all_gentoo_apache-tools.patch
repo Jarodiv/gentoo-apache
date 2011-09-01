@@ -1,13 +1,16 @@
----
- Makefile.in         |   10 ++++++++--
- support/Makefile.in |   18 ++++--------------
- 2 files changed, 12 insertions(+), 16 deletions(-)
-
-Index: httpd-2.2.6/Makefile.in
-===================================================================
---- httpd-2.2.6.orig/Makefile.in
-+++ httpd-2.2.6/Makefile.in
-@@ -198,14 +198,20 @@ install-include:
+diff -pruN a/Makefile.in b/Makefile.in
+--- a/Makefile.in	2011-08-24 00:34:55.000000000 +0300
++++ b/Makefile.in	2011-08-24 00:29:01.000000000 +0300
+@@ -14,7 +14,7 @@ PROGRAM_DEPENDENCIES = \
+ 
+ PROGRAMS        = $(PROGRAM_NAME)
+ TARGETS         = $(PROGRAMS) $(shared_build) $(other_targets)
+-INSTALL_TARGETS = install-htdocs install-error install-icons \
++INSTALL_TARGETS = install-conf install-htdocs install-error install-icons \
+ 	install-other install-cgi install-include install-suexec install-build \
+ 	install-man
+ 
+@@ -202,14 +202,20 @@ install-include:
  	  $(INSTALL_DATA) $$hdr $(DESTDIR)$(includedir); \
  	done
  
@@ -30,10 +33,9 @@ Index: httpd-2.2.6/Makefile.in
  	@if test "x$(RSYNC)" != "x" && test -x $(RSYNC) ; then \
  	  $(RSYNC) --exclude .svn -rlpt --numeric-ids $(top_srcdir)/docs/manual/ $(DESTDIR)$(manualdir)/; \
  	else \
-Index: httpd-2.2.6/support/Makefile.in
-===================================================================
---- httpd-2.2.6.orig/support/Makefile.in
-+++ httpd-2.2.6/support/Makefile.in
+diff -pruN a/support/Makefile.in b/support/Makefile.in
+--- a/support/Makefile.in	2011-04-16 22:09:47.000000000 +0300
++++ b/support/Makefile.in	2011-08-24 00:33:10.000000000 +0300
 @@ -1,9 +1,8 @@
 -DISTCLEAN_TARGETS = apxs apachectl dbmmanage log_server_status \
 -	logresolve.pl phf_abuse_log.cgi split-logfile envvars-std
@@ -41,12 +43,12 @@ Index: httpd-2.2.6/support/Makefile.in
  
  CLEAN_TARGETS = suexec
  
--PROGRAMS = htpasswd htdigest rotatelogs logresolve ab checkgid htdbm htcacheclean httxt2dbm
+-PROGRAMS = htpasswd htdigest rotatelogs logresolve ab htdbm htcacheclean httxt2dbm $(NONPORTABLE_SUPPORT)
 +PROGRAMS = apxs
  TARGETS  = $(PROGRAMS)
  
  PROGRAM_LDADD        = $(UTIL_LDFLAGS) $(PROGRAM_DEPENDENCIES) $(EXTRA_LIBS) $(AP_LIBS)
-@@ -12,22 +11,13 @@ PROGRAM_DEPENDENCIES = 
+@@ -12,22 +11,13 @@ PROGRAM_DEPENDENCIES =
  include $(top_builddir)/build/rules.mk
  
  install:

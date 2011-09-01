@@ -91,7 +91,7 @@ stop() {
 		sleep 1 && i=$(expr $i + 1)
 	done
 
-	test $i -le ${TIMEOUT}
+	test $i -lt ${TIMEOUT}
 	eend $?
 }
 
