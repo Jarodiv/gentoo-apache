@@ -1,15 +1,6 @@
 diff -pruN a/Makefile.in b/Makefile.in
 --- a/Makefile.in	2011-08-24 00:34:55.000000000 +0300
 +++ b/Makefile.in	2011-08-24 00:29:01.000000000 +0300
-@@ -14,7 +14,7 @@ PROGRAM_DEPENDENCIES = \
- 
- PROGRAMS        = $(PROGRAM_NAME)
- TARGETS         = $(PROGRAMS) $(shared_build) $(other_targets)
--INSTALL_TARGETS = install-htdocs install-error install-icons \
-+INSTALL_TARGETS = install-conf install-htdocs install-error install-icons \
- 	install-other install-cgi install-include install-suexec install-build \
- 	install-man
- 
 @@ -202,14 +202,20 @@ install-include:
  	  $(INSTALL_DATA) $$hdr $(DESTDIR)$(includedir); \
  	done
