@@ -69,7 +69,7 @@ start() {
 	[ -f /var/log/apache2/ssl_scache ] && rm /var/log/apache2/ssl_scache
 
 	ebegin "Starting ${SVCNAME}"
-	${APACHE2} ${APACHE2_OPTS} -k start
+	start-stop-daemon --start -- ${APACHE2} ${APACHE2_OPTS} -k start
 
 	i=0
 	while [ ! -e "${PIDFILE}" ] && [ $i -lt ${TIMEOUT} ]; do
@@ -84,7 +84,7 @@ stop() {
 	checkconfd || return 1
 
 	ebegin "Stopping ${SVCNAME}"
-	${APACHE2} ${APACHE2_OPTS} -k stop
+	start-stop-daemon --stop --pidfile ${PIDFILE} -- ${APACHE2} ${APACHE2_OPTS} -k stop
 
 	i=0
 	while pidof "${APACHE2}" >/dev/null && [ $i -lt ${TIMEOUT} ]; do
