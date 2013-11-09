@@ -42,7 +42,7 @@ APACHE2_OPTS="-D DEFAULT_VHOST -D LANGUAGE -D INFO"
 # YOU HAVE BEEN WARNED.
 
 # PID file
-#PIDFILE=/var/run/apache2.pid
+#PIDFILE=/run/apache2.pid
 
 # timeout for startup/shutdown checks
 #TIMEOUT=10
