@@ -78,9 +78,12 @@ start() {
 	start-stop-daemon --start -- ${APACHE2} ${APACHE2_OPTS} -k start
 
 	local i=0 retval=1
-	while [ ! -e "${PIDFILE}" ] && [ $i -lt ${TIMEOUT} ]; do
+	while [ $i -lt ${TIMEOUT} ] ; do
+		if [ -e "${PIDFILE}" ] ; then
+			retval=0
+			break
+		fi
 		sleep 1 && i=$(expr $i + 1)
-		[ -e "${PIDFILE}" ] && retval=0
 	done
 
 	eend ${retval}
