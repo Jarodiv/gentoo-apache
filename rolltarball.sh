@@ -16,7 +16,8 @@
 #
 # Changes:
 #	05-Jun-2005	Complete rewrite to clean up code
-#	20-Apr-2014	Use git instead of svn
+#	20-Apr-2014	Use git instead of svn. Change patchname in ebuild as
+#			well
 #
 
 # Please increase version number before each commit which includes changes to
@@ -373,6 +374,7 @@ edebug "Detecting settings for tarball based on ebuild name"
 
 EBUILD_BASE=$(basename ${EBUILD})
 EBUILD_NAME=${EBUILD_BASE/-[0-9]*/}
+TB_NAME="gentoo-${EBUILD_NAME}"
 TB_VER=${EBUILD_BASE/${EBUILD_NAME}-/}
 TB_VER=${TB_VER/.ebuild/}
 DATESTAMP=${DATESTAMP:-$(date +%Y%m%d)}
@@ -380,8 +382,8 @@ DATESTAMP=${DATESTAMP:-$(date +%Y%m%d)}
 case ${EBUILD_NAME} in
 	apache)
 		TREE=${TB_VER%.*}
-		TB=gentoo-apache-${TB_VER}-${DATESTAMP}.tar.bz2
-		TB_DIR=gentoo-apache-${TB_VER}
+		TB=${TB_NAME}-${TB_VER}-${DATESTAMP}.tar.bz2
+		TB_DIR=${TB_NAME}-${TB_VER}
 		;;
 	gentoo-webroot-default)
 		TREE=gentoo-webroot-default
@@ -496,11 +498,12 @@ build_tarball() {
 	then
 		if [ -r ${EBUILD} ]
 		then
-			pretend && einfo "  Update GENTOO_PATCHSTAMP and GENTOO_DEVELOPER"
+			pretend && einfo "  Update GENTOO_PATCHSTAMP, GENTOO_DEVELOPER and GENTOO_PATCHNAME"
 			pretend || {
-				ebegin "Updating GENTOO_PATCHSTAMP and GENTOO_DEVELOPER"
+				ebegin "Updating GENTOO_PATCHSTAMP, GENTOO_DEVELOPER and GENTOO_PATCHNAME"
 				sed -i -e "s/GENTOO_PATCHSTAMP=\".*\"/GENTOO_PATCHSTAMP=\"${DATESTAMP}\"/" ${EBUILD} && 
-				sed -i -e "s/GENTOO_DEVELOPER=\".*\"/GENTOO_DEVELOPER=\"${G_USER}\"/" ${EBUILD}
+				sed -i -e "s/GENTOO_DEVELOPER=\".*\"/GENTOO_DEVELOPER=\"${G_USER}\"/" ${EBUILD} &&
+				sed -i -e "s/GENTOO_PATCHNAME=\".*\"/GENTOO_PATCHNAME=\"${TB_NAME}-${TB_VER}\"/" ${EBUILD}
 				eend $? "Failed to modify ebuild" || {
 					einfo "It's highly recommended that you delete the ebuild"
 					einfo "and cvs up and then modify the ebuild manually."
