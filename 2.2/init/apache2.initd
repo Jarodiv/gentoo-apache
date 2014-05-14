@@ -106,7 +106,7 @@ stop() {
 	${APACHE2} ${APACHE2_OPTS} -k stop
 
 	local i=0 retval=0
-	while ( test -f "${PIDFILE}" && pgrep -P ${PID} apache2 >/dev/null ) \
+	while ( test -f "${PIDFILE}" || pgrep -P ${PID} apache2 >/dev/null ) \
 		&& [ $i -lt ${TIMEOUT} ]; do
 		sleep 1 && i=$(expr $i + 1)
 	done
