@@ -16,7 +16,7 @@
 	manualdir:       /usr/share/doc/version/manual
 	sysconfdir:      /etc/apache2
 	localstatedir:   /var
-	runtimedir:      /run
+	runtimedir:      /var/run
 	logfiledir:      /var/log/apache2
 	proxycachedir:   /var/cache/apache2
 </Layout>

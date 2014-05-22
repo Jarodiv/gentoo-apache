@@ -34,7 +34,7 @@ checkconfd() {
 		eerror "apache2.initd-baselayout-1 from /usr/share/doc/apache2-*/"
 	fi
 
-	PIDFILE="${PIDFILE:-/run/apache2.pid}"
+	PIDFILE="${PIDFILE:-/var/run/apache2.pid}"
 	TIMEOUT=${TIMEOUT:-15}
 
 	SERVERROOT="${SERVERROOT:-/usr/lib/apache2}"
