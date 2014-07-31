@@ -30,7 +30,7 @@ diff -Nur httpd-2.2.16/modules/generators/mod_status.c httpd-2.2.16-peruser/modu
      int short_report;
      int no_table_report;
 +    int peruser_stats;
-     worker_score *ws_record;
+     worker_score *ws_record = apr_palloc(r->pool, sizeof *ws_record);
      process_score *ps_record;
      char *stat_buffer;
 @@ -268,6 +271,7 @@
