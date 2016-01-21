@@ -20,6 +20,8 @@ PIDFILE="${PIDFILE:-/var/run/apache2.pid}"
 TIMEOUT=${TIMEOUT:-15}
 SERVERROOT="${SERVERROOT:-/usr/lib/apache2}"
 CONFIGFILE="${CONFIGFILE:-/etc/apache2/httpd.conf}"
+LYNX="${LYNX:-lynx -dump}"
+STATUSURL="${STATUSURL:-http://localhost/server-status}"
 RELOAD_TYPE="${RELOAD_TYPE:-graceful}"
 
 # Append the server root and configuration file parameters to the
@@ -149,9 +151,6 @@ modules() {
 }
 
 fullstatus() {
-	LYNX="${LYNX:-lynx -dump}"
-	STATUSURL="${STATUSURL:-http://localhost/server-status}"
-
 	if ! type -p $(set -- ${LYNX}; echo $1) 2>&1 >/dev/null; then
 		eerror "lynx not found! you need to emerge www-client/lynx"
 	else
@@ -165,7 +164,6 @@ virtualhosts() {
 }
 
 configdump() {
-	LYNX="${LYNX:-lynx -dump}"
 	INFOURL="${INFOURL:-http://localhost/server-info}"
 
 	checkconfd || return 1
