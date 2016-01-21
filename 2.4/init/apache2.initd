@@ -22,6 +22,11 @@ SERVERROOT="${SERVERROOT:-/usr/lib/apache2}"
 CONFIGFILE="${CONFIGFILE:-/etc/apache2/httpd.conf}"
 RELOAD_TYPE="${RELOAD_TYPE:-graceful}"
 
+# Append the server root and configuration file parameters to the
+# user's APACHE2_OPTS.
+APACHE2_OPTS="${APACHE2_OPTS} -d ${SERVERROOT}"
+APACHE2_OPTS="${APACHE2_OPTS} -f ${CONFIGFILE}"
+
 # The path to the apache2 binary.
 APACHE2="/usr/sbin/apache2"
 
@@ -42,9 +47,6 @@ checkconfd() {
 		eerror "SERVERROOT does not exist: ${SERVERROOT}"
 		return 1
 	fi
-
-	APACHE2_OPTS="${APACHE2_OPTS} -d ${SERVERROOT}"
-	APACHE2_OPTS="${APACHE2_OPTS} -f ${CONFIGFILE}"
 }
 
 checkconfig() {
