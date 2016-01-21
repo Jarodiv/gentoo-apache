@@ -28,12 +28,6 @@ configtest() {
 }
 
 checkconfd() {
-	if [ ! -f /etc/init.d/sysfs ]; then
-		eerror "This init script works only with openrc (baselayout-2)."
-		eerror "If you still need baselayout-1.x, please, use"
-		eerror "apache2.initd-baselayout-1 from /usr/share/doc/apache2-*/"
-	fi
-
 	PIDFILE="${PIDFILE:-/var/run/apache2.pid}"
 	TIMEOUT=${TIMEOUT:-15}
 
