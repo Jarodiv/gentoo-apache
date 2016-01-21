@@ -22,6 +22,9 @@ SERVERROOT="${SERVERROOT:-/usr/lib/apache2}"
 CONFIGFILE="${CONFIGFILE:-/etc/apache2/httpd.conf}"
 RELOAD_TYPE="${RELOAD_TYPE:-graceful}"
 
+# The path to the apache2 binary.
+APACHE2="/usr/sbin/apache2"
+
 depend() {
 	need net
 	use mysql dns logger netmount postgresql
@@ -44,7 +47,6 @@ checkconfd() {
 	APACHE2_OPTS="${APACHE2_OPTS} -f ${CONFIGFILE}"
 	[ -n "${STARTUPERRORLOG}" ] && APACHE2_OPTS="${APACHE2_OPTS} -E ${STARTUPERRORLOG}"
 
-	APACHE2="/usr/sbin/apache2"
 }
 
 checkconfig() {
