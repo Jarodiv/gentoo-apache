@@ -15,6 +15,13 @@ description_reload="Kills all children and reloads the configuration."
 description_virtualhosts="Show the settings as parsed from the config file (currently only shows the virtualhost settings)."
 description_stop="Kills all children and stops the server."
 
+# Apply default values for some conf.d variables.
+PIDFILE="${PIDFILE:-/var/run/apache2.pid}"
+TIMEOUT=${TIMEOUT:-15}
+SERVERROOT="${SERVERROOT:-/usr/lib/apache2}"
+CONFIGFILE="${CONFIGFILE:-/etc/apache2/httpd.conf}"
+RELOAD_TYPE="${RELOAD_TYPE:-graceful}"
+
 depend() {
 	need net
 	use mysql dns logger netmount postgresql
@@ -28,16 +35,10 @@ configtest() {
 }
 
 checkconfd() {
-	PIDFILE="${PIDFILE:-/var/run/apache2.pid}"
-	TIMEOUT=${TIMEOUT:-15}
-
-	SERVERROOT="${SERVERROOT:-/usr/lib/apache2}"
 	if [ ! -d ${SERVERROOT} ]; then
 		eerror "SERVERROOT does not exist: ${SERVERROOT}"
 		return 1
 	fi
-
-	CONFIGFILE="${CONFIGFILE:-/etc/apache2/httpd.conf}"
 
 	APACHE2_OPTS="${APACHE2_OPTS} -d ${SERVERROOT}"
 	APACHE2_OPTS="${APACHE2_OPTS} -f ${CONFIGFILE}"
@@ -106,8 +107,6 @@ stop() {
 }
 
 reload() {
-	RELOAD_TYPE="${RELOAD_TYPE:-graceful}"
-
 	checkconfig || return 1
 
 	if [ "${RELOAD_TYPE}" = "restart" ]; then
