@@ -38,11 +38,6 @@ checkconfd() {
 	fi
 
 	CONFIGFILE="${CONFIGFILE:-/etc/apache2/httpd.conf}"
-	[ "${CONFIGFILE#/}" = "${CONFIGFILE}" ] && CONFIGFILE="${SERVERROOT}/${CONFIGFILE}"
-	if [ ! -r "${CONFIGFILE}" ]; then
-		eerror "Unable to read configuration file: ${CONFIGFILE}"
-		return 1
-	fi
 
 	APACHE2_OPTS="${APACHE2_OPTS} -d ${SERVERROOT}"
 	APACHE2_OPTS="${APACHE2_OPTS} -f ${CONFIGFILE}"
