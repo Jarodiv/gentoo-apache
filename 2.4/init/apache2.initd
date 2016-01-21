@@ -85,8 +85,6 @@ start() {
 stop() {
 	if [ "${RC_CMD}" = "restart" ]; then
 		checkconfig || return 1
-	else
-		checkconfd || return 1
 	fi
 
 	PID=$(cat "${PIDFILE}" 2>/dev/null)
