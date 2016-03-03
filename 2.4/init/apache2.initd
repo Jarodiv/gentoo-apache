@@ -69,8 +69,8 @@ start() {
 	checkconfig || return 1
 
 	if [ -n "${STARTUPERRORLOG}" ] ; then
-	    	# We must make sure that we only append to APACHE2_OPTS
-	    	# in start() and not in stop() or anywhere else that may
+		# We must make sure that we only append to APACHE2_OPTS
+		# in start() and not in stop() or anywhere else that may
 		# be executed along with start(), see bug #566726.
 		APACHE2_OPTS="${APACHE2_OPTS} -E ${STARTUPERRORLOG}"
 	fi
