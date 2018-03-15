@@ -1,2 +1,25 @@
 #!/bin/sh
-exec /etc/init.d/apache2 "$@"
+
+APACHE2="/usr/sbin/apache2"
+APACHE_OPTS=""
+APACHE_RC_CONF="/etc/conf.d/apache2"
+# List of init script verbs that should be passed forward
+RC_VERBS="start stop restart checkconfd configtest modules virtualhosts configdump fullstatus graceful gracefulstop reload"
+
+load_rc_config() {
+	[ -f "${APACHE_RC_CONF}" ] || return 1
+	eval "export $(grep '^[[:space:]]*APACHE2_OPTS' ${APACHE_RC_CONF})"
+	eval $(grep '^[[:space:]]*SERVERROOT' ${APACHE_RC_CONF})
+	eval $(grep '^[[:space:]]*CONFIGFILE' ${APACHE_RC_CONF})
+	export SERVERROOT="${SERVERROOT:-/usr/@LIBDIR@/apache2}"
+	export CONFIGFILE="${CONFIGFILE:-/etc/apache2/httpd.conf}"
+}
+
+# If first parameter is a verb defined in $RC_VERBS, pass the command to init script.
+# In other cases, compile command line and run the command on apache binary.
+if [ "${RC_VERBS}" =~ "${1}" ] ; then
+	exec /etc/init.d/apache2 "${@}"
+else
+	load_rc_config || exit 1
+	${APACHE2} ${APACHE2_OPTS} -d ${SERVERROOT} -f ${CONFIGFILE} "${@}"
+fi
