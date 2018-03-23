@@ -34,7 +34,7 @@ APACHE2="/usr/sbin/apache2"
 
 depend() {
 	need net
-	use mysql dns logger netmount postgresql
+	use dns entropy logger mysql netmount postgresql
 	after sshd
 }
 
