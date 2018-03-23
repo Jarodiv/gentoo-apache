@@ -17,7 +17,7 @@ load_rc_config() {
 
 # If first parameter is a verb defined in $RC_VERBS, pass the command to init script.
 # In other cases, compile command line and run the command on apache binary.
-if [ "${RC_VERBS}" =~ "${1}" ] ; then
+if echo "${RC_VERBS}" | grep -q "${1}" ; then
 	exec /etc/init.d/apache2 "${@}"
 else
 	load_rc_config || exit 1
