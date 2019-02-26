@@ -8,9 +8,12 @@ RC_VERBS="start stop restart checkconfd configtest modules virtualhosts configdu
 
 load_rc_config() {
 	[ -f "${APACHE_RC_CONF}" ] || return 1
-	eval "export $(grep '^[[:space:]]*APACHE2_OPTS' ${APACHE_RC_CONF})"
-	eval $(grep '^[[:space:]]*SERVERROOT' ${APACHE_RC_CONF})
-	eval $(grep '^[[:space:]]*CONFIGFILE' ${APACHE_RC_CONF})
+	if ! grep -q '^[[:space:]]*APACHE2_OPTS' ${APACHE_RC_CONF} ; then
+		echo "Cannot find APACHE2_OPTS in ${APACHE_RC_CONF}"
+		exit 1
+	fi
+	. ${APACHE_RC_CONF}
+	export APACHE2_OPTS
 	export SERVERROOT="${SERVERROOT:-/usr/@LIBDIR@/apache2}"
 	export CONFIGFILE="${CONFIGFILE:-/etc/apache2/httpd.conf}"
 }
